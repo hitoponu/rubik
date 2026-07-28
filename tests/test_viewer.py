@@ -122,6 +122,48 @@ def test_json_round_trip():
         assert json.loads(line) == message
 
 
+def test_importing_the_window_module_keeps_the_backend():
+    """_window を読みこむだけでは、絵の描きかたが変わらない。
+
+    描きかたを選びなおすのは main() の中だけ、という約束を守らせる。
+    ここが崩れると、このファイルの他のテスト (窓を出さない Agg 方式で
+    描いている) が動かなくなる。
+    """
+    assert matplotlib.get_backend().lower() == "agg", matplotlib.get_backend()
+
+
+def test_child_survives_the_notebook_backend():
+    """Jupyter Notebook から使っても、窓が落ちない。
+
+    Jupyter は MPLBACKEND という環境変数に「窓を出さずにノートへ絵を貼る方式」
+    を入れてくる。それが子プロセスに引きつがれると、plt.show() が何もせずに
+    終わって窓が出ないまま消えてしまう。_window.py はそれを選びなおしている。
+
+    このテストだけは、ほんの少しのあいだ本当に窓が開く。
+    """
+    import os
+    import time
+
+    from rubik import viewer
+
+    # Jupyter が設定するのと同じ環境変数を用意して、その状態で窓を開いてみる。
+    # ここで指している部品はこのテスト環境には入っていないので、
+    # 引きついでしまうと子プロセスは起動の途中で落ちる。
+    before = os.environ.get("MPLBACKEND")
+    os.environ["MPLBACKEND"] = "module://matplotlib_inline.backend_inline"
+    try:
+        rubik.init()
+        time.sleep(2.0)
+        assert viewer._alive(), \
+            "Jupyter の設定を引きついでしまい、窓が出ないまま終わっている"
+    finally:
+        rubik.close()
+        if before is None:
+            os.environ.pop("MPLBACKEND", None)
+        else:
+            os.environ["MPLBACKEND"] = before
+
+
 def _visible_colors(view_name):
     """その向きから見たとき、画面に実際に出ている色の文字を集めて返す。
 

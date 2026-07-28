@@ -56,6 +56,28 @@ def _read_stdin():
     _inbox.put(_CLOSED)
 
 
+def _use_window_backend():
+    """絵の描きかたを「別の窓を出す方式」に切りかえる。うまくいけばその名前を返す。
+
+    matplotlib には絵の出しかたが何通りかあり、環境変数 MPLBACKEND などで
+    決まる。ここで選びなおすのには理由がある。
+
+    Jupyter Notebook から使うと、ノートを動かしている側が
+    MPLBACKEND に「窓を出さずにノートへ絵を貼る方式」を設定していて、
+    それがこの子プロセスにも引きつがれてしまう。そのままだと
+    plt.show() が何もせずに終わり、窓が出ないまま子プロセスが消える。
+
+    そこで、窓を出せる方式を順に試して、最初に使えたものを採用する。
+    """
+    for name in ("macosx", "tkagg", "qtagg"):
+        try:
+            plt.switch_backend(name)
+            return name
+        except Exception:
+            continue        # この方式は使えない。次を試す
+    return None
+
+
 def _japanese_font():
     """日本語が出せるフォントを探す。見つからなければ None。
 
@@ -88,6 +110,16 @@ def _colors_of(cube):
 
 
 def main():
+    # まず、窓を出せる描きかたを確保する。これができないと何も始まらない。
+    if _use_window_backend() is None:
+        print(
+            "3Dの窓を出せませんでした。画面のない場所 (Google Colab などの"
+            "クラウド上のノートブックや、画面なしのサーバ) では窓を開けません。"
+            "手もとの Python か Jupyter Notebook で試してください。",
+            file=sys.stderr,
+        )
+        return
+
     # 最初の1つが届くまで待つ。これが最初に映るキューブになる。
     threading.Thread(target=_read_stdin, daemon=True).start()
     first = _inbox.get()

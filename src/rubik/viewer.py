@@ -12,6 +12,7 @@
 import atexit
 import importlib.util
 import json
+import os
 import subprocess
 import sys
 
@@ -65,12 +66,23 @@ def init(cube=None):
     else:
         check(cube)
 
+    # 子プロセスに渡す環境をととのえる。
+    #
+    # Jupyter Notebook は MPLBACKEND という環境変数に「窓を出さずにノートへ
+    # 絵を貼る方式」を書きこむ。これをそのまま引きつぐと、子プロセスは
+    # 窓を出さずに終わってしまう。しかも、その方式を実現する部品が子の側に
+    # 入っていないと、絵を描く準備の途中でエラーになって落ちる。
+    # そこで、この1つだけ取りのぞいて渡す。
+    child_env = dict(os.environ)
+    child_env.pop("MPLBACKEND", None)
+
     # 別プロセスとして窓を立ち上げる。標準入力をパイプにしておいて、
     # そこにキューブを流しこむ。
     _process = subprocess.Popen(
         [sys.executable, "-m", "rubik._window"],
         stdin=subprocess.PIPE,
         text=True,
+        env=child_env,
     )
     atexit.register(close)
 

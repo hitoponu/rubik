@@ -27,6 +27,55 @@ uv sync
 uv run python examples/demo.py
 ```
 
+## 動作環境
+
+| 使いかた | 3Dの窓 | 備考 |
+|---|---|---|
+| 手もとの Python スクリプト | ○ | 最後に `rubik.wait()` を置く |
+| 手もとの Jupyter Notebook / JupyterLab | ○ | 対話的に使うならこれが一番向いている |
+| 手もとの IPython | ○ | 同上 |
+| Google Colab | ✗ | 画面のないクラウド上で動くため窓を開けない |
+| 画面なしのサーバ、SSH 先 | ✗ | 同上 |
+
+窓が開けない場所では、日本語のメッセージが出る。
+リスト表現と18通りの操作、`show()` による展開図表示は**どこでも動く**ので、
+Colab でも3D以外はそのまま使える。
+
+### Jupyter Notebook での使いかた
+
+セルごとに1手ずつ進められる。窓は開いたままで、向きも保たれる。
+
+```python
+# セル1
+import rubik
+cube = rubik.shuffle(seed=1)
+rubik.init(cube)          # 窓が開く。ここでマウスで好きな向きにしておく
+
+# セル2 (何度でも実行できる)
+cube = rubik.R(cube)
+rubik.update(cube)        # 窓の中身だけが変わる。向きはさわったまま
+
+# セル3
+rubik.close()             # 窓を閉じる
+```
+
+**`rubik.wait()` は呼ばないこと。** カーネルが窓を閉じるまで止まってしまう。
+ノートブックでは `close()` を使うか、そのままにしておけばよい
+(カーネルを終了すると窓も閉じる)。
+
+`%matplotlib inline` などを使っていても影響を受けない。
+窓は別プロセスで動いていて、`import rubik` した側は matplotlib を
+いっさい読み込まないため。
+
+### Windows
+
+プラットフォームごとの分岐は書いていない。絵の描きかたは
+`macosx` → `tkagg` → `qtagg` の順に試すので、Windows では `tkagg`
+(Python に同梱の tkinter) が使われる。日本語の表示も
+`Yu Gothic` / `MS Gothic` を探すようにしてある。
+
+ただし**手もとに Windows 機がなく、実機での確認はできていない**。
+
 ## 1. キューブのリスト表現
 
 `6 x 3 x 3` の入れ子リスト。中身は `'B' 'Y' 'R' 'W' 'G' 'O'` の1文字。
