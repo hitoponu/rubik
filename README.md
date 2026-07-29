@@ -98,51 +98,33 @@ rubik.close()             # 窓を閉じる
 窓は別プロセスで動いていて、`import rubik` した側は matplotlib を
 いっさい読み込まないため。
 
-### macOS での環境構築
+### 環境構築スクリプト
 
-`setup_mac.sh` を用意してある。ターミナルで rubik フォルダに移動して、
+まず rubik を `git clone` して、**そのフォルダの中で**次を実行する。
 
-```
-bash setup_mac.sh
-```
+| OS | 実行のしかた |
+|---|---|
+| macOS | `bash setup_mac.sh` |
+| Windows | `setup_windows.bat` をダブルクリック |
 
-Finder でダブルクリックして使いたいときは、名前を `setup_mac.command` に変えて、
-一度だけ `chmod +x setup_mac.command` を実行しておく。
+やっていることは3段階で、途中で失敗したらどこで止まったか日本語で出る。
 
-やっていることは5段階で、途中で失敗したらどこで止まったか日本語で出る。
-
-1. `git` を確認する。無ければ `xcode-select --install` を出して、終わるまで待つ
-2. `uv` を入れる。Homebrew があれば `brew install uv`、無ければ公式のインストーラ
-3. rubik プロジェクトを探す
-4. `uv sync` で Python と部品をそろえる
-5. `uv run python tests/test_moves.py` で動作を確かめる
+1. `uv` を入れる（すでにあれば飛ばす）
+2. `uv sync` で Python と部品をそろえる
+3. テストを流して動作を確かめる
 
 最後に「Jupyter Notebook を開きますか」と聞いてくる。
-`git clone` から始めさせたいときは、スクリプト先頭の `REPO_URL` に取得元を書く。
-
-### Windows での環境構築
-
-`setup_windows.bat` を用意してある。**rubik フォルダの中に置いてダブルクリック**
-すれば、git と uv を入れて、Python の環境をそろえ、動作確認まで済ませてくれる。
-最後に「Jupyter Notebook を開きますか」と聞いてくる。
-
-やっていることは6段階で、途中で失敗したらどこで止まったか日本語で出る。
-
-1. `winget` があるか確かめる
-2. `git` を入れる（すでにあれば飛ばす）
-3. `uv` を入れる（winget が駄目なら公式のインストーラに切りかえる）
-4. rubik プロジェクトを探す
-5. `uv sync` で Python と部品をそろえる
-6. `uv run python tests\test_moves.py` で動作を確かめる
 
 補足。
 
-- `winget` が要るので、Windows 10 は 1809 以降か Windows 11。
-  無い場合は Microsoft Store の「アプリ インストーラー」を入れる
+- `git` は入れない。clone できている時点で入っているため
+- uv の入れかたは、macOS は Homebrew があれば `brew install uv`、
+  無ければ公式のインストーラ。Windows は `winget` があれば winget、
+  無ければ公式のインストーラ。`winget` は必須ではない
 - uv を入れた直後は PATH が反映されないことがある。そのときは
-  「いったんこの画面を閉じて、もう一度実行してください」と出るので従う
-- フォルダごと配るのではなく `git clone` させたいときは、bat の中ほどの
-  `REPO_URL` に取得元を書いておく
+  「いったん画面を閉じて、もう一度実行してください」と出るので従う
+- macOS で Finder からダブルクリックして使いたいときは、名前を
+  `setup_mac.command` に変えて、一度だけ `chmod +x setup_mac.command` しておく
 
 ### Windows での動きかた
 

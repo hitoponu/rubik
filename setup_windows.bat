@@ -8,46 +8,28 @@ echo ==========================================================
 echo    rubik  Windows 環境構築
 echo ==========================================================
 echo.
-echo    git と uv を入れて、Python の環境をそろえます。
+echo    uv を入れて、Python の環境をそろえます。
 echo    途中で「ユーザーアカウント制御」の確認が出たら
 echo    「はい」を選んでください。
 echo.
 
-REM ==========================================================
-REM  取得元。空のままなら、この bat と同じ場所にある
-REM  rubik プロジェクトを使います。
-REM  git clone させたいときは、ここに URL を書いてください。
-REM ==========================================================
-set "REPO_URL="
+REM ---------- ここが rubik プロジェクトの中か ----------
+if not exist "%~dp0pyproject.toml" goto :no_project
+pushd "%~dp0."
 
-REM ---------------------------------------------------------
-echo [1/6] winget を探しています...
-where winget >nul 2>&1
-if errorlevel 1 goto :no_winget
-echo        見つかりました。
-echo.
-
-REM ---------------------------------------------------------
-echo [2/6] git を確認しています...
-where git >nul 2>&1
-if not errorlevel 1 goto :git_ready
-echo        入っていないので入れます。数分かかります。
-winget install --id Git.Git -e --source winget --accept-package-agreements --accept-source-agreements
-if errorlevel 1 goto :fail_git
-:git_ready
-set "PATH=%PATH%;C:\Program Files\Git\cmd"
-echo        OK
-echo.
-
-REM ---------------------------------------------------------
-echo [3/6] uv を確認しています...
+REM ---------- 1. uv ----------
+echo [1/3] uv を確認しています...
 where uv >nul 2>&1
 if not errorlevel 1 goto :uv_ready
 echo        入っていないので入れます。数分かかります。
+where winget >nul 2>&1
+if errorlevel 1 goto :uv_by_powershell
 winget install --id astral-sh.uv -e --source winget --accept-package-agreements --accept-source-agreements
 if not errorlevel 1 goto :uv_added
-echo        winget で入れられなかったので、公式の手順を試します...
-powershell -NoProfile -ExecutionPolicy Bypass -Command "irm https://astral.sh/uv/install.ps1 ^| iex"
+echo        winget では入りませんでした。公式の手順に切りかえます。
+:uv_by_powershell
+echo        公式のインストーラで入れます...
+powershell -NoProfile -ExecutionPolicy Bypass -Command "irm https://astral.sh/uv/install.ps1 | iex"
 if errorlevel 1 goto :fail_uv
 :uv_added
 set "PATH=%PATH%;%LOCALAPPDATA%\Microsoft\WinGet\Links;%USERPROFILE%\.local\bin"
@@ -57,32 +39,16 @@ if errorlevel 1 goto :reopen
 echo        OK
 echo.
 
-REM ---------------------------------------------------------
-echo [4/6] rubik プロジェクトを探しています...
-set "PROJ="
-if exist "%~dp0pyproject.toml" set "PROJ=%~dp0."
-if not defined PROJ if exist "%~dp0rubik\pyproject.toml" set "PROJ=%~dp0rubik"
-if defined PROJ goto :proj_ready
-if not defined REPO_URL goto :no_project
-echo        手もとに無いので取ってきます...
-git clone "%REPO_URL%" "%~dp0rubik"
-if errorlevel 1 goto :fail_clone
-set "PROJ=%~dp0rubik"
-:proj_ready
-pushd "%PROJ%"
-echo        %CD%
-echo.
-
-REM ---------------------------------------------------------
-echo [5/6] Python と必要な部品をそろえています。
+REM ---------- 2. Python の環境 ----------
+echo [2/3] Python と必要な部品をそろえています。
 echo        初回は5分ほどかかることがあります...
 uv sync
 if errorlevel 1 goto :fail_sync
 echo        OK
 echo.
 
-REM ---------------------------------------------------------
-echo [6/6] ちゃんと動くか確かめています...
+REM ---------- 3. 動作確認 ----------
+echo [3/3] ちゃんと動くか確かめています...
 if not exist "tests\test_moves.py" goto :skip_test
 uv run python tests\test_moves.py
 if errorlevel 1 goto :fail_test
@@ -114,17 +80,11 @@ uv run jupyter notebook
 goto :done
 
 REM ---------------------------------------------------------
-:no_winget
+:no_project
 echo.
-echo    [エラー] winget が見つかりませんでした。
-echo    Microsoft Store で「アプリ インストーラー」を入れてから、
-echo    この画面を閉じて、もう一度実行してください。
-goto :abort
-
-:fail_git
-echo.
-echo    [エラー] git を入れられませんでした。
-echo    https://git-scm.com/download/win から手で入れてください。
+echo    [エラー] rubik プロジェクトの中ではないようです。
+echo    clone した rubik フォルダの中にこの bat を置いて、
+echo    そこで実行してください。
 goto :abort
 
 :fail_uv
@@ -138,19 +98,6 @@ goto :abort
 echo.
 echo    uv は入りましたが、この画面ではまだ使えません。
 echo    いったんこの画面を閉じて、もう一度この bat を実行してください。
-goto :abort
-
-:no_project
-echo.
-echo    [エラー] rubik プロジェクトが見つかりませんでした。
-echo    この bat を rubik フォルダの中に置いて実行するか、
-echo    bat の中ほどにある REPO_URL に取得元を書いてください。
-goto :abort
-
-:fail_clone
-echo.
-echo    [エラー] git clone に失敗しました。
-echo    REPO_URL が正しいか、ネットにつながっているか確かめてください。
 goto :abort
 
 :fail_sync
