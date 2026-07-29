@@ -24,8 +24,12 @@ rubik.wait()               # 窓が閉じられるまで待つ
 
 ```
 uv sync
-uv run python examples/demo.py
+uv run python examples/demo.py          # スクリプトで動かす
+uv run jupyter notebook                 # ノートブックで対話的に動かす
 ```
+
+見本は `examples/demo.py`（スクリプト）と `examples/demo.ipynb`
+（ノートブック）の2つ。
 
 ## 動作環境
 
@@ -40,6 +44,33 @@ uv run python examples/demo.py
 窓が開けない場所では、日本語のメッセージが出る。
 リスト表現と18通りの操作、`show()` による展開図表示は**どこでも動く**ので、
 Colab でも3D以外はそのまま使える。
+
+### Jupyter Notebook を動かす手順
+
+初回だけ、ノートブックを開発用の依存に加える。
+
+```
+uv add --dev notebook
+```
+
+あとは毎回これで起動する。
+
+```
+uv run jupyter notebook
+```
+
+ブラウザが開いたら `examples/demo.ipynb` を選ぶ。カーネルは `Python 3`
+をそのまま使えばよい。これはプロジェクトの `.venv` を指しているので、
+`import rubik` がそのまま通る。
+
+**かならず `uv run` を通すこと。** 素の `jupyter notebook` で起動すると
+別の Python が使われてしまい、`import rubik` に失敗する。
+
+プロジェクトに手を加えたくなければ、その場かぎりの起動もできる。
+
+```
+uv run --with notebook jupyter notebook
+```
 
 ### Jupyter Notebook での使いかた
 
