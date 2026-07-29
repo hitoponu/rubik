@@ -98,6 +98,28 @@ rubik.close()             # 窓を閉じる
 窓は別プロセスで動いていて、`import rubik` した側は matplotlib を
 いっさい読み込まないため。
 
+### macOS での環境構築
+
+`setup_mac.sh` を用意してある。ターミナルで rubik フォルダに移動して、
+
+```
+bash setup_mac.sh
+```
+
+Finder でダブルクリックして使いたいときは、名前を `setup_mac.command` に変えて、
+一度だけ `chmod +x setup_mac.command` を実行しておく。
+
+やっていることは5段階で、途中で失敗したらどこで止まったか日本語で出る。
+
+1. `git` を確認する。無ければ `xcode-select --install` を出して、終わるまで待つ
+2. `uv` を入れる。Homebrew があれば `brew install uv`、無ければ公式のインストーラ
+3. rubik プロジェクトを探す
+4. `uv sync` で Python と部品をそろえる
+5. `uv run python tests/test_moves.py` で動作を確かめる
+
+最後に「Jupyter Notebook を開きますか」と聞いてくる。
+`git clone` から始めさせたいときは、スクリプト先頭の `REPO_URL` に取得元を書く。
+
 ### Windows での環境構築
 
 `setup_windows.bat` を用意してある。**rubik フォルダの中に置いてダブルクリック**
@@ -298,6 +320,7 @@ macOS では、窓を持つプログラムは「メインの流れ」を窓の�
 | `src/rubik/geometry.py` | リストの添字と3次元空間の位置の対応表 |
 | `src/rubik/viewer.py` | `init` `update` `wait` `close` |
 | `src/rubik/_window.py` | 窓そのもの（別プロセスで動く） |
+| `setup_mac.sh` | macOS の環境構築（git と uv を入れる） |
 | `setup_windows.bat` | Windows の環境構築（git と uv を入れる） |
 | `examples/demo.py` | スクリプトの見本 |
 | `examples/demo.ipynb` | Jupyter Notebook の見本 |
