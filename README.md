@@ -98,7 +98,31 @@ rubik.close()             # 窓を閉じる
 窓は別プロセスで動いていて、`import rubik` した側は matplotlib を
 いっさい読み込まないため。
 
-### Windows
+### Windows での環境構築
+
+`setup_windows.bat` を用意してある。**rubik フォルダの中に置いてダブルクリック**
+すれば、git と uv を入れて、Python の環境をそろえ、動作確認まで済ませてくれる。
+最後に「Jupyter Notebook を開きますか」と聞いてくる。
+
+やっていることは6段階で、途中で失敗したらどこで止まったか日本語で出る。
+
+1. `winget` があるか確かめる
+2. `git` を入れる（すでにあれば飛ばす）
+3. `uv` を入れる（winget が駄目なら公式のインストーラに切りかえる）
+4. rubik プロジェクトを探す
+5. `uv sync` で Python と部品をそろえる
+6. `uv run python tests\test_moves.py` で動作を確かめる
+
+補足。
+
+- `winget` が要るので、Windows 10 は 1809 以降か Windows 11。
+  無い場合は Microsoft Store の「アプリ インストーラー」を入れる
+- uv を入れた直後は PATH が反映されないことがある。そのときは
+  「いったんこの画面を閉じて、もう一度実行してください」と出るので従う
+- フォルダごと配るのではなく `git clone` させたいときは、bat の中ほどの
+  `REPO_URL` に取得元を書いておく
+
+### Windows での動きかた
 
 プラットフォームごとの分岐は書いていない。絵の描きかたは
 `macosx` → `tkagg` → `qtagg` の順に試すので、Windows では `tkagg`
@@ -106,6 +130,8 @@ rubik.close()             # 窓を閉じる
 `Yu Gothic` / `MS Gothic` を探すようにしてある。
 
 ただし**手もとに Windows 機がなく、実機での確認はできていない**。
+bat ファイルは日本語が化けないよう cp932 と CRLF で書き、
+ラベルの対応や echo 行の特殊文字は機械的に検査してある。
 
 ## 1. キューブのリスト表現
 
@@ -272,6 +298,9 @@ macOS では、窓を持つプログラムは「メインの流れ」を窓の�
 | `src/rubik/geometry.py` | リストの添字と3次元空間の位置の対応表 |
 | `src/rubik/viewer.py` | `init` `update` `wait` `close` |
 | `src/rubik/_window.py` | 窓そのもの（別プロセスで動く） |
+| `setup_windows.bat` | Windows の環境構築（git と uv を入れる） |
+| `examples/demo.py` | スクリプトの見本 |
+| `examples/demo.ipynb` | Jupyter Notebook の見本 |
 
 ## テスト
 
