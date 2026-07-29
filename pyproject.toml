@@ -1,8 +1,10 @@
 [project]
 name = "rubik"
 version = "0.1.0"
-description = "Add your description here"
+description = "教育用のルービックキューブライブラリ。リスト表現・18通りの操作・マウスで回せる3D表示。"
 readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
 authors = [
     { name = "hitoponu", email = "121503258+hitoponu@users.noreply.github.com" }
 ]
