@@ -99,8 +99,12 @@ say "       OK  $(uv --version)"
 say ""
 
 # --- 2. Python の環境 -------------------------------------------------
-say "[2/3] Python と必要な部品をそろえています。"
+say "[2/3] Python、ライブラリ、Jupyter Notebook をそろえています。"
 say "       初回は5分ほどかかることがあります..."
+say ""
+say "       Jupyter Notebook は pyproject.toml の dependency-groups に"
+say "       書いてあるので、この uv sync で一緒に入ります。"
+say ""
 
 if ! uv sync; then
     die "uv sync に失敗しました。" \
@@ -118,6 +122,15 @@ if [ -f "tests/test_moves.py" ]; then
             "上に出ているメッセージを控えて、先生に相談してください。"
     fi
 fi
+
+# Jupyter Notebook がちゃんと入ったか
+if ! uv run python -c "import notebook" >/dev/null 2>&1; then
+    die "Jupyter Notebook が入っていません。" \
+        "pyproject.toml の dependency-groups に notebook があるか確かめて、" \
+        "もう一度このスクリプトを実行してください。"
+fi
+say ""
+say "       Jupyter Notebook も入っています。"
 
 say ""
 say "=========================================================="
