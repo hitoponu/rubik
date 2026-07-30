@@ -1,3 +1,36 @@
+## 導入方法
+
+ターミナルを開く。
+
+以下をコピペで実行。
+```bash
+git
+git clone https://github.com/hitoponu/rubik.git
+cd rubik
+setup_mac.sh
+```
+
+## 動かし方
+
+ターミナルで以下のコマンドを実行。
+
+```bash
+uv run jupyter notebook
+```
+ブラウザ上でjupyter notebookが開いたらexamplesのdemo.ipynbを起動する。
+
+![examplesを開く](images/jupyter_examples.png)
+![demoを開く](images/jupyter_demo.png)
+
+> **自分でプログラムを書く場合**
+> ![newを押す](images/jupyter_new.png)
+> ![python3を選ぶ](images/jupyter_new_python3.png)
+
+<br>
+<br>
+<br>
+以下はAIが生成したレポジトリの説明です。
+
 # rubik
 
 教育用のルービックキューブ Python ライブラリ。
