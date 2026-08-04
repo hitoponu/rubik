@@ -7,16 +7,22 @@
 git
 git clone https://github.com/hitoponu/rubik.git
 cd rubik
-setup_mac.sh
+./setup_mac.command
 ```
+
+最後の行のかわりに、Finder で `rubik` フォルダを開いて
+**`setup_mac.command` をダブルクリック**してもよい。
 
 ## 動かし方
 
-ターミナルで以下のコマンドを実行。
+Finder で **`start_jupyter.command` をダブルクリック**する。
+
+ターミナルからでもよい。
 
 ```bash
-uv run jupyter notebook
+./start_jupyter.command
 ```
+
 ブラウザ上でjupyter notebookが開いたらexamplesのdemo.ipynbを起動する。
 
 ![examplesを開く](images/jupyter_examples.png)
@@ -140,8 +146,11 @@ rubik.close()             # 窓を閉じる
 
 | OS | 実行のしかた |
 |---|---|
-| macOS | `bash setup_mac.sh` |
+| macOS | `setup_mac.command` をダブルクリック |
 | Windows | `setup_windows.bat` をダブルクリック |
+
+環境ができたら、あとは `start_jupyter.command`（Windows なら
+`uv run jupyter notebook`）で Jupyter Notebook を開ける。
 
 やっていることは3段階で、途中で失敗したらどこで止まったか日本語で出る。
 
@@ -159,8 +168,13 @@ rubik.close()             # 窓を閉じる
   無ければ公式のインストーラ。`winget` は必須ではない
 - uv を入れた直後は PATH が反映されないことがある。そのときは
   「いったん画面を閉じて、もう一度実行してください」と出るので従う
-- macOS で Finder からダブルクリックして使いたいときは、名前を
-  `setup_mac.command` に変えて、一度だけ `chmod +x setup_mac.command` しておく
+- macOS の2つのファイルの拡張子が `.sh` ではなく `.command` なのは、
+  macOS では `.command` だけが「ダブルクリックしたら Terminal が実行するもの」
+  として登録されているため。`.sh` は `.bashrc` などと同じ「ただの文字ファイル」
+  あつかいで、ダブルクリックしてもエディタで開くだけになる
+- GitHub から ZIP でダウンロードした場合は、macOS が「開発元が未確認」と
+  言って止めることがある。その場合はファイルを右クリックして「開く」を選ぶ。
+  `git clone` したものなら、そのままダブルクリックできる
 
 ### Windows での動きかた
 
@@ -428,8 +442,9 @@ macOS では、窓を持つプログラムは「メインの流れ」を窓の�
 | `src/rubik/viewer.py` | `Viewer` クラスと `init` `update` `wait` `close` |
 | `src/rubik/_window.py` | 窓そのもの（別プロセスで動く） |
 | `src/rubik/__init__.py` | 3通りの使いかたの入口。18通りの関数をここで組み立てる |
-| `setup_mac.sh` | macOS の環境構築（uv を入れる） |
-| `setup_windows.bat` | Windows の環境構築（uv を入れる） |
+| `setup_mac.command` | macOS の環境構築（uv を入れる）。ダブルクリックで動く |
+| `start_jupyter.command` | macOS で Jupyter Notebook を開く。ダブルクリックで動く |
+| `setup_windows.bat` | Windows の環境構築（uv を入れる）。ダブルクリックで動く |
 | `examples/demo.py` | スクリプトの見本 |
 | `examples/demo.ipynb` | Jupyter Notebook の見本 |
 

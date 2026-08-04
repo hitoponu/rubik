@@ -2,15 +2,18 @@
 #
 # rubik  macOS 環境構築
 #
-#   bash setup_mac.sh
+# Finder でこのファイルをダブルクリックすれば動く。
+# ターミナルからなら、rubik フォルダの中で
 #
-# clone した rubik フォルダの中に置いて、そこで実行すること。
+#   ./setup_mac.command
+#
 # uv を入れて、Python の環境をそろえ、動作確認まで済ませる。
+# clone した rubik フォルダの中に置いて、そこで実行すること。
 #
-# Finder でダブルクリックして使いたいときは、名前を setup_mac.command に
-# 変えてから、一度だけ次を実行して実行権限をつけておく。
-#
-#   chmod +x setup_mac.command
+# 拡張子が .sh ではなく .command なのは、macOS では .command だけが
+# 「ダブルクリックしたら Terminal が実行するもの」として登録されているため。
+# .sh は .bashrc などと同じ「ただの文字ファイル」あつかいなので、
+# ダブルクリックしてもエディタで開くだけで実行されない。
 #
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
