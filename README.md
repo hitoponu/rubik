@@ -52,7 +52,7 @@ rubik.U()                       # 続けて上の面
 rubik.do("RUR'U'", times=6)     # 手順をまとめて。6回くり返すと元に戻る
 
 rubik.show()                    # 展開図を文字で表示
-rubik.cube                      # いまの 6x3x3 リスト
+rubik.cube()                    # いまの 6x3x3 リスト
 ```
 
 使いかたは3通りある。**どれも同じ名前の操作が使える。**
@@ -60,8 +60,8 @@ rubik.cube                      # いまの 6x3x3 リスト
 
 | 段 | 書きかた | 状態を持つのは |
 |---|---|---|
-| 1. いちばん手軽 | `rubik.R()` | `rubik.cube`（rubik が1つ持っている） |
-| 2. キューブを作る | `c = rubik.Cube()` / `c.R()` | その `c` |
+| 1. いちばん手軽 | `rubik.R()` | rubik が1つ持っている（`rubik.cube()` で取り出す） |
+| 2. キューブを作る | `c = rubik.Cube()` / `c.R()` | その `c`（`c.cube()` で取り出す） |
 | 3. リストを持ち回る | `after = rubik.R(before)` | 呼び出した側 |
 
 ## 準備
@@ -232,14 +232,14 @@ cube[面][縦][横]
 rubik.shuffle()                     # 完成状態から20手、でたらめに回す
 rubik.shuffle(times=5)              # 5手だけ
 rubik.shuffle(seed=42)              # 何度やっても同じ配置になる
-rubik.cube                          # 結果はここに入る
+rubik.cube()                        # 結果はここに入る
 
 after = rubik.shuffle(before, times=3)   # 渡せば新しいリストを返す
 ```
 
 | 引数 | 既定値 | 意味 |
 |---|---|---|
-| `cube` | `None` | 回しはじめるキューブ。省くと `rubik.cube` を差しかえる |
+| `cube` | `None` | 回しはじめるキューブ。省くといまのキューブを差しかえる |
 | `times` | `20` | 回す回数 |
 | `seed` | `None` | 数を渡すと毎回まったく同じ回しかたになる |
 
@@ -248,27 +248,28 @@ after = rubik.shuffle(before, times=3)   # 渡せば新しいリストを返す
 外側の18通りの中からその都度1つを選ぶだけなので、`R` のすぐあとに `Ri` が来て
 打ち消しあうこともある。それでも `times` が20もあればじゅうぶん混ざる。
 
-### `rubik.cube` — rubik が持っている1つのキューブ
+### `rubik.cube()` — rubik が持っている1つのキューブ
 
-引数を省いて操作したとき、変わるのはこれ。ふつうのリストなので直接読める。
+引数を省いて操作したとき、変わるのはこれ。`cube()` で取り出す。
 
 ```python
 rubik.R()
-rubik.cube                 # いまの 6x3x3 リスト
-rubik.cube[2][0][0]        # F面 (前) の左上のステッカー
-rubik.cube[:] = x          # 中身を丸ごと入れかえる
+rubik.cube()               # いまの 6x3x3 リスト
+rubik.cube()[2][0][0]      # F面 (前) の左上のステッカー
+rubik.cube(x)              # 差しかえる（値は返さない）
 ```
 
-**`rubik.cube` を直接書きかえたときは、窓は追随しない。**
-描き直したければ `rubik.update()` を呼ぶ。
+返ってくるのは写しではなく**中身そのもの**なので、書きかえればそのまま
+状態が変わる。**ただし窓は追随しない。** 描き直したければ `rubik.update()` を呼ぶ。
 
-操作しても**入れ物のリストそのものは取りかわらない**（中身だけ入れかわる）。
-そのおかげで `from rubik import *` が使える（後述）。
+変数ではなく関数にしてあるのは、`from rubik import *` で取りこんだあとも
+いつでもいまの状態が返るようにするため（後述）。
+
 いまの状態を取っておきたいときは、写しを取る。
 
 ```python
 import copy
-before = copy.deepcopy(rubik.cube)
+before = copy.deepcopy(rubik.cube())
 ```
 
 ### `from rubik import *` で使う
@@ -281,18 +282,14 @@ from rubik import *
 R()
 U()
 do("RUR'U'", times=6)
-cube                       # これも同じキューブを指している
+cube()                     # 呼ぶたびに、いまの状態が返る
 show()
 is_solved()
 ```
 
-**`cube` は取りこんだあとも、いまの状態を指しつづける。**
-操作のたびに新しいリストを作って入れ直すのではなく、
-同じ入れ物の中身だけを入れかえているため。
-
-1つだけ注意。中身を丸ごと入れかえるときは `cube = x` ではなく
-**`cube[:] = x`** と書くこと。前者だと入れ物ごと取りかわってしまい、
-`rubik.cube` と別のものになる。
+**`cube` が変数ではなく関数なのは、これができるようにするため。**
+変数だと `from ... import *` した時点の値が名前に貼りついてしまい、
+いくら回しても古い状態を返しつづけることになる。
 
 入ってくる名前は58個で、組み込み関数と衝突するものは無い。
 ただし `E` や `S` のような1文字の名前も含まれるので、
@@ -315,7 +312,7 @@ Jupyter Notebook はセルの最後に書いた式の値を画面に出すので
 値を返すと 6x3x3 のリストがだらだら表示されてしまうため。
 
 ```python
-rubik.R()                  # None。rubik.cube を回す
+rubik.R()                  # None。いまのキューブを回す
 rubik.do("RUR'U'")         # None
 rubik.solved()             # None
 rubik.shuffle(seed=1)      # None
@@ -326,7 +323,7 @@ rubik.is_solved()          # True / False
 rubik.parse("RUR'U'")      # ['R', 'U', 'Ri', 'Ui']
 ```
 
-見わけかたは単純で、**キューブを渡せば値が返り、省けば `rubik.cube` が変わる**。
+見わけかたは単純で、**キューブを渡せば値が返り、省けばいまのキューブが変わる**。
 
 ## 2. 27通りの操作
 
@@ -371,7 +368,7 @@ rubik.do("M2E'S")          # 手順の中でも使える
 **引数を省くか、渡すかで役割が変わる。**
 
 ```python
-rubik.R()                  # rubik.cube を回して、3Dの窓も描き直す
+rubik.R()                  # いまのキューブを回して、3Dの窓も描き直す
 after = rubik.R(before)    # before を回した新しいリストを返す。窓は触らない
 ```
 
@@ -417,7 +414,7 @@ rubik.U("リストじゃない")
 rubik.U([[1, 2, 3]] * 6)
 # AssertionError: ルービックキューブは 6x3x3 のリストで渡してください。
 
-cube = rubik.Cube().cube
+cube = rubik.Cube().cube()
 cube[2][1][0] = "X"
 rubik.U(cube)
 # AssertionError: ルービックキューブの中身は 'B' 'Y' 'R' 'W' 'G' 'O' のどれかに
@@ -438,8 +435,8 @@ rubik.U(cube)
 
 | 関数 | 意味 |
 |---|---|
-| `rubik.init(cube=None)` | 窓を開く。省くといまの `rubik.cube` |
-| `rubik.update(cube=None)` | 映すキューブを更新する。省くといまの `rubik.cube` |
+| `rubik.init(cube=None)` | 窓を開く。省くといまのキューブ |
+| `rubik.update(cube=None)` | 映すキューブを更新する。省くといまのキューブ |
 | `rubik.reset_UFR()` | 見る向きを U・F・R が見える向きに戻す |
 | `rubik.reset_DBL()` | 見る向きを D・B・L が見える向きに戻す |
 | `rubik.wait()` | 窓が閉じられるまで待つ |
@@ -467,7 +464,8 @@ c.R()
 c.do("RUR'U'")
 c.shuffle(seed=1)
 c.show()
-c.cube                         # この個体の 6x3x3 リスト
+c.cube()                       # この個体の 6x3x3 リスト
+c.cube(x)                      # 差しかえる
 c.is_solved()
 
 a = rubik.Cube(show3d=True)    # 窓つき
@@ -475,7 +473,7 @@ b = rubik.Cube(show3d=True)    # 2つめの窓。並べて見くらべられる
 ```
 
 操作の名前はモジュールの関数と同じ27通り。ほかに
-`solved()` `shuffle()` `do()` `set()` `show()` `is_solved()` と、
+`cube()` `solved()` `shuffle()` `do()` `show()` `is_solved()` と、
 窓むけの `init()` `update()` `reset_UFR()` `reset_DBL()` `wait()` `close()` がある。
 
 Jupyter でセルに `c` と書くだけで展開図が出る（`__repr__` が展開図を返す）。
@@ -537,7 +535,7 @@ macOS では、窓を持つプログラムは「メインの流れ」を窓の�
 
 ```
 uv run python tests/test_moves.py         # 28件  リスト表現と27通りの操作
-uv run python tests/test_interactive.py   # 24件  rubik.cube、do()、Cube
+uv run python tests/test_interactive.py   # 25件  cube()、do()、Cube
 uv run python tests/test_star_import.py   # 10件  from rubik import * で使う
 uv run python tests/test_viewer.py        # 11件  3Dグラフィクス
 ```

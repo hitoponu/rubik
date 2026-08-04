@@ -95,7 +95,7 @@ def test_do_times():
 
 
 # ----------------------------------------------------------------------
-# rubik.cube (暗黙のキューブ)
+# cube() (rubik が持っている1つのキューブ)
 # ----------------------------------------------------------------------
 
 def test_module_functions_exist():
@@ -107,23 +107,23 @@ def test_module_functions_exist():
 
 
 def test_no_argument_moves_the_module_cube():
-    """引数を省くと rubik.cube が進む。"""
-    rubik.cube = state.solved()
+    """引数を省くと、いまのキューブが進む。"""
+    rubik.cube(state.solved())
     rubik.R()
-    assert rubik.cube == moves.R(state.solved())
+    assert rubik.cube() == moves.R(state.solved())
 
     rubik.U()
-    assert rubik.cube == moves.U(moves.R(state.solved()))
+    assert rubik.cube() == moves.U(moves.R(state.solved()))
 
     # 値は返さない
     assert rubik.Ui() is None
-    assert rubik.cube == moves.Ui(moves.U(moves.R(state.solved())))
+    assert rubik.cube() == moves.Ui(moves.U(moves.R(state.solved())))
 
 
 def test_argument_form_stays_pure():
-    """キューブを渡したときは、rubik.cube を触らない。"""
-    rubik.cube = moves.shuffle(times=7, seed=3)
-    snapshot = copy.deepcopy(rubik.cube)
+    """キューブを渡したときは、いまのキューブを触らない。"""
+    rubik.cube(moves.shuffle(times=7, seed=3))
+    snapshot = copy.deepcopy(rubik.cube())
 
     other = state.solved()
     rubik.R(other)
@@ -132,56 +132,75 @@ def test_argument_form_stays_pure():
     rubik.do("RUR'U'", other, times=2)
     rubik.shuffle(other, times=5)
 
-    assert rubik.cube == snapshot, "rubik.cube が書きかわっている"
+    assert rubik.cube() == snapshot, "いまのキューブが書きかわっている"
     assert other == state.solved(), "渡したキューブが書きかわっている"
 
 
 def test_module_do():
-    """rubik.do() は rubik.cube を進める。"""
-    rubik.cube = state.solved()
+    """rubik.do() はいまのキューブを進める。"""
+    rubik.cube(state.solved())
     rubik.do("RUR'U'", times=6)
-    assert rubik.cube == state.solved(), "6回くり返しても戻らない"
+    assert rubik.cube() == state.solved(), "6回くり返しても戻らない"
 
     rubik.do("RUR'U'")
-    assert rubik.cube != state.solved()
+    assert rubik.cube() != state.solved()
 
 
 def test_solved_and_shuffle_set_the_module_cube():
-    """solved() と shuffle() は rubik.cube を差しかえる。"""
-    rubik.cube = moves.shuffle(times=5, seed=1)
+    """solved() と shuffle() はいまのキューブを差しかえる。"""
+    rubik.cube(moves.shuffle(times=5, seed=1))
     assert rubik.solved() is None
-    assert rubik.cube == state.solved()
+    assert rubik.cube() == state.solved()
 
     assert rubik.shuffle(seed=42) is None
-    # rubik.cube は入れ物を取りかえずに中身だけ入れかわるので、
-    # あとで見くらべたいときは写しを取っておく
-    got = copy.deepcopy(rubik.cube)
+    got = copy.deepcopy(rubik.cube())
     assert got != state.solved()
     # seed が同じなら何度でも同じ配置
     rubik.shuffle(seed=42)
-    assert rubik.cube == got
+    assert rubik.cube() == got
 
 
-def test_module_cube_keeps_its_identity():
-    """操作しても rubik.cube の入れ物 (リストそのもの) は取りかわらない。
+def test_cube_gets_and_sets():
+    """cube() は取り出しと差しかえの両方をする。
 
-    from rubik import * で cube を取りこんだ人が、古い入れ物を指したまま
-    取り残されないようにするため。詳しくは tests/test_star_import.py。
+    引数なしなら、いまのキューブを返す。
+    キューブを渡すと、そちらに差しかえて何も返さない。
     """
-    rubik.cube = state.solved()      # ここは入れ物ごと差しかえる
-    container = rubik.cube
+    # 取り出す
+    rubik.solved()
+    assert rubik.cube() == state.solved()
 
-    for step in (rubik.R, rubik.M, rubik.solved, rubik.shuffle):
-        step()
-        assert rubik.cube is container, f"{step.__name__}() で入れ物が変わった"
+    # 差しかえる。値は返さない
+    target = moves.shuffle(times=6, seed=8)
+    assert rubik.cube(target) is None
+    assert rubik.cube() == target
 
-    rubik.do("RUR'U'")
-    assert rubik.cube is container
+    # 差しかえたあとも、ふつうに回せる
+    rubik.R()
+    assert rubik.cube() == moves.R(target)
 
-    # 中身だけ入れかえる書き方でも、入れ物は同じまま
-    rubik.cube[:] = state.solved()
-    assert rubik.cube is container
-    assert rubik.is_solved()
+    # 返ってくるのは中身そのものなので、書きかえると状態が変わる
+    rubik.solved()
+    rubik.cube()[2][0][0] = "R"
+    assert rubik.cube()[2][0][0] == "R"
+    assert not rubik.is_solved()
+    rubik.solved()
+
+
+def test_cube_survives_being_imported():
+    """cube を名前で取りこんでも、いつでもいまの状態が返る。
+
+    変数ではなく関数にしてあるのは、これができるようにするため。
+    詳しくは tests/test_star_import.py。
+    """
+    from rubik import cube          # from rubik import * と同じこと
+
+    rubik.solved()
+    assert cube() == state.solved()
+
+    rubik.R()
+    assert cube() == rubik.cube(), "取りこんだ cube() が古い状態を返している"
+    assert cube() == moves.R(state.solved())
 
 
 def test_state_changing_calls_return_nothing():
@@ -193,7 +212,7 @@ def test_state_changing_calls_return_nothing():
     import contextlib
     import io
 
-    rubik.cube = state.solved()
+    rubik.cube(state.solved())
     c = rubik.Cube()
 
     with contextlib.redirect_stdout(io.StringIO()):   # show() の表示は捨てる
@@ -218,7 +237,7 @@ def test_state_changing_calls_return_nothing():
         assert c.do("RUR'U'") is None
         assert c.solved() is None
         assert c.shuffle(seed=1) is None
-        assert c.set(state.solved()) is None
+        assert c.cube(state.solved()) is None
         assert c.show() is None
         assert c.update() is None
         assert c.reset_UFR() is None
@@ -254,23 +273,23 @@ def test_value_returning_calls_still_return():
 def test_is_solved():
     """is_solved() は状態を変えずに、完成しているかだけを見る。
 
-    solved() のほうは rubik.cube を完成状態にしてしまうので、
+    solved() のほうはいまのキューブを完成状態にしてしまうので、
     「戻ったか」を調べるのに使うと、いつでも True になってしまう。
     """
-    rubik.cube = state.solved()
+    rubik.cube(state.solved())
     assert rubik.is_solved()
 
-    rubik.cube = moves.shuffle(times=5, seed=4)
-    snapshot = copy.deepcopy(rubik.cube)
+    rubik.cube(moves.shuffle(times=5, seed=4))
+    snapshot = copy.deepcopy(rubik.cube())
     assert not rubik.is_solved()
-    assert rubik.cube == snapshot, "is_solved() が状態を変えている"
+    assert rubik.cube() == snapshot, "is_solved() が状態を変えている"
 
-    # 引数を渡せばそちらを見る。rubik.cube は触らない
+    # 引数を渡せばそちらを見る。いまのキューブは触らない
     assert rubik.is_solved(state.solved())
-    assert rubik.cube == snapshot
+    assert rubik.cube() == snapshot
 
     # do() で戻したあとを、正しく判定できる
-    rubik.cube = state.solved()
+    rubik.cube(state.solved())
     rubik.do("RUR'U'", times=6)
     assert rubik.is_solved()
     rubik.do("RUR'U'")
@@ -278,16 +297,16 @@ def test_is_solved():
 
 
 def test_show_uses_the_module_cube():
-    """引数を省いた show() は rubik.cube を表示する。"""
+    """引数を省いた show() は、いまのキューブを表示する。"""
     import contextlib
     import io
 
-    rubik.cube = moves.shuffle(times=4, seed=2)
+    rubik.cube(moves.shuffle(times=4, seed=2))
 
     printed = io.StringIO()
     with contextlib.redirect_stdout(printed):
         rubik.show()
-    assert printed.getvalue().rstrip("\n") == state.net(rubik.cube)
+    assert printed.getvalue().rstrip("\n") == state.net(rubik.cube())
 
     # 引数を渡せば、そちらを表示する
     printed = io.StringIO()
@@ -302,7 +321,7 @@ def test_show_uses_the_module_cube():
 
 def test_cube_starts_solved():
     c = rubik.Cube()
-    assert c.cube == state.solved()
+    assert c.cube() == state.solved()
     assert c.is_solved()
 
 
@@ -318,10 +337,10 @@ def test_cube_moves_change_itself():
     """メソッドを呼ぶと、そのキューブ自身が変わる。"""
     c = rubik.Cube()
     assert c.R() is None
-    assert c.cube == moves.R(state.solved())
+    assert c.cube() == moves.R(state.solved())
 
     c.do("RUR'U'", times=6)
-    assert c.cube == moves.R(state.solved()), "do のあと状態がずれている"
+    assert c.cube() == moves.R(state.solved()), "do のあと状態がずれている"
 
 
 def test_cubes_are_independent():
@@ -330,7 +349,7 @@ def test_cubes_are_independent():
     b = rubik.Cube()
     a.do("RUR'U'")
     assert b.is_solved(), "もう一方まで変わっている"
-    assert a.cube != b.cube
+    assert a.cube() != b.cube
 
 
 def test_cube_does_not_share_the_given_list():
@@ -340,7 +359,7 @@ def test_cube_does_not_share_the_given_list():
 
     # 渡した側を書きかえても、Cube は影響を受けない
     start[0][0][0] = "R"
-    assert c.cube[0][0][0] == "W", "渡したリストをそのまま抱えている"
+    assert c.cube()[0][0][0] == "W", "渡したリストをそのまま抱えている"
 
     # 逆に Cube を回しても、渡した側は変わらない
     before = copy.deepcopy(start)
@@ -356,7 +375,7 @@ def test_cube_solved_and_shuffle():
 
     other = rubik.Cube()
     other.shuffle(seed=7)
-    assert other.cube == c.cube, "seed が同じなら同じ配置になるはず"
+    assert other.cube() == c.cube(), "seed が同じなら同じ配置になるはず"
 
     c.solved()
     assert c.is_solved()
@@ -365,18 +384,18 @@ def test_cube_solved_and_shuffle():
 def test_cube_set():
     c = rubik.Cube()
     target = moves.shuffle(times=6, seed=5)
-    assert c.set(target) is None
-    assert c.cube == target
+    assert c.cube(target) is None
+    assert c.cube() == target
     target[1][1][1] = "R"
-    assert c.cube[1][1][1] != "R", "渡したリストをそのまま抱えている"
+    assert c.cube()[1][1][1] != "R", "渡したリストをそのまま抱えている"
 
 
 def test_cube_repr_is_the_net():
     """Jupyter でセルに c と書くと展開図が出る。"""
     c = rubik.Cube()
-    assert repr(c) == state.net(c.cube)
+    assert repr(c) == state.net(c.cube())
     c.R()
-    assert repr(c) == state.net(c.cube)
+    assert repr(c) == state.net(c.cube())
 
 
 def test_cube_without_3d_has_no_process():

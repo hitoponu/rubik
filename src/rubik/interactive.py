@@ -6,7 +6,7 @@
     c.R()                     # 右の面を回す。c 自身が変わる
     c.do("RUR'U'")            # 手順をまとめて
     c.show()                  # 展開図を見る
-    c.cube                    # この個体の 6x3x3 リスト
+    c.cube()                  # この個体の 6x3x3 リスト
 
 3D の窓がほしいときは show3d=True を渡す。Cube ごとに別の窓が開くので、
 2つ作って並べて見くらべることもできる。
@@ -30,9 +30,9 @@ from .viewer import Viewer
 class Cube:
     """1つのルービックキューブ。
 
-    状態を変えるメソッド (回す、solved、shuffle、do、set) は値を返さない。
+    状態を変えるメソッド (回す、solved、shuffle、do、cube(x)) は値を返さない。
     Jupyter Notebook のセルで c.R() と書いたときに、6x3x3 のリストが
-    だらだら表示されるのを避けるため。いまの状態は c.cube で見る。
+    だらだら表示されるのを避けるため。いまの状態は c.cube() で見る。
     """
 
     def __init__(self, cube=None, show3d=False):
@@ -44,10 +44,10 @@ class Cube:
         show3d=True にすると、このキューブ専用の3Dの窓が開く。
         """
         if cube is None:
-            self.cube = _state.solved()
+            self._cube = _state.solved()
         else:
             _state.check(cube)
-            self.cube = copy.deepcopy(cube)
+            self._cube = copy.deepcopy(cube)
 
         self._viewer = None
         if show3d:
@@ -55,19 +55,32 @@ class Cube:
 
     def __repr__(self):
         # Jupyter Notebook でセルに c と書くだけで展開図が出る
-        return _state.net(self.cube)
+        return _state.net(self._cube)
 
     # --- 状態をあつかう ------------------------------------------------
 
-    def set(self, cube):
-        """状態を丸ごと差しかえる。"""
-        _state.check(cube)
-        self.cube = copy.deepcopy(cube)
+    def cube(self, new_cube=None):
+        """このキューブの中身 (6x3x3 のリスト) を返す。
+
+            c.cube()             # いまの状態
+            c.cube()[2][0][0]    # F面 (前) の左上のステッカー
+
+        返ってくるのは写しではなく中身そのものなので、書きかえれば
+        そのまま状態が変わる。窓は追随しないので update() を呼ぶ。
+
+        リストを渡すと、そちらに差しかえる。このときは値を返さない。
+
+            c.cube(x)
+        """
+        if new_cube is None:
+            return self._cube
+        _state.check(new_cube)
+        self._cube = copy.deepcopy(new_cube)
         self._draw()
 
     def solved(self):
         """完成状態に戻す。"""
-        self.cube = _state.solved()
+        self._cube = _state.solved()
         self._draw()
 
     def shuffle(self, times=20, seed=None):
@@ -75,7 +88,7 @@ class Cube:
 
         seed に数を渡すと、何度やってもまったく同じ配置になる。
         """
-        self.cube = _moves.shuffle(times=times, seed=seed)
+        self._cube = _moves.shuffle(times=times, seed=seed)
         self._draw()
 
     def do(self, sequence, times=1):
@@ -84,16 +97,16 @@ class Cube:
             c.do("RUR'U'")
             c.do("RUR'U'", times=6)   # 6回くり返すと元に戻る
         """
-        self.cube = _moves.do(sequence, self.cube, times=times)
+        self._cube = _moves.do(sequence, self._cube, times=times)
         self._draw()
 
     def show(self):
         """展開図を文字で表示する。"""
-        _state.show(self.cube)
+        _state.show(self._cube)
 
     def is_solved(self):
         """完成しているか。"""
-        return _state.is_solved(self.cube)
+        return _state.is_solved(self._cube)
 
     # --- 3D の窓 --------------------------------------------------------
 
@@ -105,12 +118,12 @@ class Cube:
         """
         if self._viewer is None:
             self._viewer = Viewer()
-        self._viewer.init(self.cube)
+        self._viewer.init(self._cube)
 
     def update(self):
         """窓を今の状態に描き直す。
 
-        c.cube を直接いじったあとに使う。回すメソッドは自分で描き直すので、
+        c.cube() の中身を直接いじったあとに使う。回すメソッドは自分で描き直すので、
         ふだんは呼ばなくてよい。
         """
         self._draw()
@@ -118,7 +131,7 @@ class Cube:
     def _draw(self):
         """窓を持っていれば描き直す。持っていなければ何もしない。"""
         if self._viewer is not None:
-            self._viewer.update(self.cube)
+            self._viewer.update(self._cube)
 
     def reset_UFR(self):
         """見る向きを、U面・F面・R面が見える向きに戻す。"""
@@ -153,7 +166,7 @@ def _make_move_method(name):
     turn = _moves.ALL_MOVES[name]
 
     def method(self):
-        self.cube = turn(self.cube)
+        self._cube = turn(self._cube)
         self._draw()
 
     method.__name__ = name
@@ -161,7 +174,7 @@ def _make_move_method(name):
     method.__doc__ = (
         (turn.__doc__ or "").rstrip()
         + "\n\n        このキューブ自身が変わる。窓があれば描き直す。"
-          "\n        値は返さない。いまの状態は c.cube で見る。"
+          "\n        値は返さない。いまの状態は c.cube() で見る。"
     )
     return method
 

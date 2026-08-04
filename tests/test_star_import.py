@@ -3,7 +3,8 @@
     uv run python tests/test_star_import.py
 
 rubik. を省いて書きたい人向けの使いかたを守るためのテスト。
-とくに cube は、名前を取りこんだあとも同じキューブを指しつづける必要がある。
+とくに cube() は、名前を取りこんだあとも、呼ぶたびにいまの状態を
+返さなければならない。
 """
 
 import builtins
@@ -37,61 +38,62 @@ def test_no_builtin_is_hidden():
 def test_cube_is_available():
     """cube という名前が取りこまれている。"""
     assert cube is rubik.cube                  # noqa: F405
+    assert callable(cube), "cube は関数のはず"  # noqa: F405
 
 
-def test_cube_stays_the_same_object():
-    """操作しても、取りこんだ cube が取り残されない。
+def test_cube_always_returns_the_live_state():
+    """操作しても、取りこんだ cube() が古い状態を返さない。
 
     ここがこのファイルの一番の目当て。
-    rubik.cube を「入れ物ごと」取りかえてしまうと、先に取りこんだ名前は
-    古い入れ物を指したままになり、いつまでも完成状態のように見えてしまう。
+    cube が変数だと、取りこんだ時点の値が名前に貼りついてしまい、
+    いくら回してもいつまでも完成状態のように見えてしまう。
+    関数にしてあるので、呼ぶたびにいまの状態が返る。
     """
     solved()                                   # noqa: F405
-    assert cube is rubik.cube                  # noqa: F405
+    assert cube() == rubik.cube()              # noqa: F405
 
     for step in (R, U, Ri, Ui, M, E, S, D2, Bi):   # noqa: F405
         step()
-        assert cube is rubik.cube, f"{step.__name__}() のあとで入れ物が変わった"
-        assert cube == rubik.cube
+        assert cube() == rubik.cube(), f"{step.__name__}() のあとでずれた"   # noqa: F405
 
     do("RUR'U'")                               # noqa: F405
-    assert cube is rubik.cube, "do() のあとで入れ物が変わった"
+    assert cube() == rubik.cube(), "do() のあとでずれた"      # noqa: F405
 
     shuffle(seed=3)                            # noqa: F405
-    assert cube is rubik.cube, "shuffle() のあとで入れ物が変わった"
+    assert cube() == rubik.cube(), "shuffle() のあとでずれた"  # noqa: F405
+    assert not is_solved()                     # noqa: F405
 
     solved()                                   # noqa: F405
-    assert cube is rubik.cube, "solved() のあとで入れ物が変わった"
+    assert cube() == rubik.cube(), "solved() のあとでずれた"   # noqa: F405
     assert is_solved()                         # noqa: F405
 
 
 def test_cube_shows_the_real_state():
     """取りこんだ cube を読むと、いまの状態がちゃんと出てくる。"""
     solved()                                   # noqa: F405
-    before = copy.deepcopy(cube)               # noqa: F405
+    before = copy.deepcopy(cube())             # noqa: F405
 
     R()                                        # noqa: F405
-    assert cube != before, "回したのに cube が変わっていない"    # noqa: F405
-    assert cube == rubik.moves.R(before)       # noqa: F405
+    assert cube() != before, "回したのに cube() が変わっていない"   # noqa: F405
+    assert cube() == rubik.moves.R(before)     # noqa: F405
 
     # 添字でも読める
     solved()                                   # noqa: F405
     R()                                        # noqa: F405
-    assert cube[2][0] == ["G", "G", "Y"], cube[2][0]   # noqa: F405
+    assert cube()[2][0] == ["G", "G", "Y"], cube()[2][0]   # noqa: F405
 
 
-def test_replacing_the_contents_keeps_the_link():
-    """cube[:] = x なら、中身を丸ごと入れかえても取り残されない。"""
+def test_cube_can_also_set():
+    """cube(x) と書けば差しかえられる。"""
     target = rubik.moves.shuffle(times=6, seed=8)
 
-    cube[:] = target                           # noqa: F405
-    assert cube is rubik.cube                  # noqa: F405
-    assert rubik.cube == target
+    assert cube(target) is None                # noqa: F405
+    assert cube() == target                    # noqa: F405
+    assert rubik.cube() == target
 
     # そのあとの操作もふつうに続けられる
     R()                                        # noqa: F405
-    assert cube is rubik.cube                  # noqa: F405
-    assert rubik.cube == rubik.moves.R(target)
+    assert cube() == rubik.moves.R(target)     # noqa: F405
 
 
 def test_all_27_moves_work():
@@ -100,7 +102,7 @@ def test_all_27_moves_work():
         solved()                               # noqa: F405
         globals()[name]()
         assert not is_solved(), f"{name}() でキューブが変わっていない"   # noqa: F405
-        assert cube is rubik.cube, f"{name}() のあとで入れ物が変わった"  # noqa: F405
+        assert cube() == rubik.cube(), f"{name}() のあとでずれた"        # noqa: F405
 
 
 def test_the_other_functions_work():
@@ -111,15 +113,15 @@ def test_the_other_functions_work():
     solved()                                   # noqa: F405
     assert is_solved()                         # noqa: F405
     assert parse("RUR'U'") == ["R", "U", "Ri", "Ui"]     # noqa: F405
-    assert check(cube) is None                 # noqa: F405
-    assert isinstance(net(cube), str)          # noqa: F405
+    assert check(cube()) is None               # noqa: F405
+    assert isinstance(net(cube()), str)        # noqa: F405
 
     with contextlib.redirect_stdout(io.StringIO()) as printed:
         show()                                 # noqa: F405
-    assert printed.getvalue().rstrip("\n") == net(cube)  # noqa: F405
+    assert printed.getvalue().rstrip("\n") == net(cube())   # noqa: F405
 
     # キューブを渡す形も使える
-    fresh = Cube().cube                        # noqa: F405
+    fresh = Cube().cube()                      # noqa: F405
     assert R(fresh) == rubik.moves.R(fresh)    # noqa: F405
     assert isinstance(do("RU", fresh), list)   # noqa: F405
     assert isinstance(shuffle(fresh, times=2), list)     # noqa: F405
@@ -131,6 +133,7 @@ def test_classes_and_constants_work():
     c.R()
     c.do("M2E'S")
     assert not c.is_solved()
+    assert isinstance(c.cube(), list)
 
     assert isinstance(Viewer(), rubik.Viewer)  # noqa: F405
 

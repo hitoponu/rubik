@@ -12,7 +12,7 @@ import time
 import rubik
 
 print("--- 完成状態 ---")
-rubik.show()                    # 引数を省くと rubik.cube を表示する
+rubik.show()                    # 引数を省くと、いまのキューブを表示する
 
 # 「セクシームーブ」と呼ばれる手順 R U R' U' をくり返す。
 # 6回くり返すと完成状態に戻る、という性質がある。
@@ -20,7 +20,7 @@ sequence = [rubik.R, rubik.U, rubik.Ri, rubik.Ui]
 
 for lap in range(6):
     for turn in sequence:
-        turn()                  # 引数なし。rubik.cube が回って、窓も描き直される
+        turn()                  # 引数なし。いまのキューブが回って、窓も描き直される
         time.sleep(0.7)         # 最初の1手のところで窓が開く
     print(f"{lap + 1} 周目おわり")
 
