@@ -50,6 +50,11 @@ _CLOSED = "__closed__"
 # ステッカーを並べる順番。色を塗りかえるときも必ずこの順で並べる。
 _STICKERS = [(f, r, c) for f in range(6) for r in range(3) for c in range(3)]
 
+# 窓の大きさ (インチ)。
+# リスト表現は100文字ぶんの幅があるので、出すときだけ横に広げる。
+_TALL = 7.5
+_WIDE = 8.8
+
 
 def _read_stdin():
     """親から届く JSON を、ひたすら読んで _inbox に入れる係。"""
@@ -135,7 +140,7 @@ def main():
 
     # 上に 3D のキューブ、下にリスト表現の文字を並べる。
     # リスト表現は出さないのがふつうで、頼まれたときだけ出す。
-    fig = plt.figure("ルービックキューブ", figsize=(7.5, 7.5))
+    fig = plt.figure("ルービックキューブ", figsize=(_TALL, _TALL))
     ax = fig.add_subplot(projection="3d")
 
     # 54枚のステッカーを、四角形の集まりとして1回だけ作る。
@@ -178,19 +183,22 @@ def main():
     # 等幅の書体でないと桁がそろわないので monospace を指定する。
     listing = fig.text(0.5, 0.0, faces(first["cube"]),
                        ha="center", va="bottom",
-                       family="monospace", fontsize=13, linespacing=1.8)
+                       family="monospace", fontsize=10, linespacing=1.9)
 
     def layout(show_list):
         """リスト表現を出すかどうかで、場所の割りふりを変える。
 
-        出さないときはキューブが窓いっぱいに広がる。
+        リスト表現は100文字ぶんの幅があるので、出すときは窓も横に広げる。
+        出さないときは正方形にして、キューブが窓いっぱいに広がるようにする。
         """
         if show_list:
-            fig.subplots_adjust(left=0.0, right=1.0, bottom=0.30, top=1.0)
+            fig.set_size_inches(_WIDE, _TALL, forward=True)
+            fig.subplots_adjust(left=0.0, right=1.0, bottom=0.28, top=1.0)
             listing.set_visible(True)
             listing.set_position((0.5, 0.03))
-            caption.set_position((0.5, 0.275))
+            caption.set_position((0.5, 0.255))
         else:
+            fig.set_size_inches(_TALL, _TALL, forward=True)
             fig.subplots_adjust(left=0.0, right=1.0, bottom=0.05, top=1.0)
             listing.set_visible(False)
             caption.set_position((0.5, 0.02))

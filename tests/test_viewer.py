@@ -196,17 +196,46 @@ def test_faces_lists_the_six_faces_in_order():
     assert positions == sorted(positions), header
 
 
+def _face_block(text, face):
+    """faces() の出力から、その面のかたまりだけを切り出す。"""
+    body = text.split("\n")[1:]                   # 見出しを除く3段
+    gap = 2
+    width = (len(body[0]) + gap) // 6 - gap
+    start = face * (width + gap)
+    return "\n".join(line[start:start + width] for line in body)
+
+
+def test_faces_blocks_are_real_python_lists():
+    """それぞれのかたまりが、そのまま cube[面] になっている。
+
+    「リストの表示だ」と分かるように括弧つきで並べているので、
+    切り出してそのまま Python のリストとして読めるはず。
+    """
+    import ast
+
+    cube = rubik.M(rubik.do("RUR'U'", state.solved()))
+    text = state.faces(cube)
+
+    for face in range(6):
+        block = _face_block(text, face)
+        assert block.startswith("[["), block
+        assert block.rstrip().endswith("]]"), block
+        assert ast.literal_eval(block) == cube[face], f"{face}面がずれている"
+
+
 def test_faces_keeps_3x3_as_3x3():
     """文字の位置から、もとの 6x3x3 がそのまま読みとれる。
 
     面ごとに向きを入れかえないので、書かれている順に読むだけで
     cube[面][縦][横] に戻せる。
     """
+    import re
+
     cube = rubik.M(rubik.do("RUR'U'", state.solved()))
     lines = state.faces(cube).split("\n")[1:]     # 見出しを除く3段
 
     for row, line in enumerate(lines):
-        letters = line.split()                    # 空白で切ると18枚ならぶ
+        letters = re.findall(r"'([A-Z])'", line)  # 引用符の中だけ拾う
         assert len(letters) == 18, line
         for face in range(6):
             for col in range(3):
