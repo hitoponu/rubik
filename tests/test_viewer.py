@@ -176,102 +176,62 @@ def test_child_survives_the_notebook_backend():
 
 
 # ----------------------------------------------------------------------
-# 窓の右がわのリスト表現パネル
+# 窓の下に出すリスト表現の文字
 # ----------------------------------------------------------------------
 
-def _new_panel():
-    """パネルを1つ作って、升と文字と、それを載せた図を返す。"""
-    from rubik._window import _build_list_panel
-
-    fig = plt.figure(figsize=(4, 6))
-    ax = fig.add_subplot()
-    boxes, letters = _build_list_panel(ax, None)
-    return fig, boxes, letters
+def test_faces_has_a_header_and_three_rows():
+    """見出し1行 + 3段の、あわせて4行になる。"""
+    lines = state.faces(state.solved()).split("\n")
+    assert len(lines) == 4, lines
 
 
-def test_panel_has_one_box_per_sticker():
-    """升は54個で、_STICKERS と同じ順に並んでいる。"""
-    fig, boxes, letters = _new_panel()
-    assert len(boxes) == 54
-    assert len(letters) == 54
-    plt.close(fig)
+def test_faces_lists_the_six_faces_in_order():
+    """見出しに 0 から 5 までが、この順で並ぶ。"""
+    header = state.faces(state.solved()).split("\n")[0]
+    for face in range(6):
+        assert f"{face} {state.FACE_NAMES[face]}" in header, header
+
+    # 現れる順番も 0,1,2,3,4,5
+    positions = [header.index(f"{f} {state.FACE_NAMES[f]}") for f in range(6)]
+    assert positions == sorted(positions), header
 
 
-def test_panel_follows_the_cube():
-    """升の色と文字が、キューブの中身どおりになる。"""
-    from rubik._window import _paint_list_panel
-    from rubik.geometry import COLOR_TO_RGB
+def test_faces_keeps_3x3_as_3x3():
+    """文字の位置から、もとの 6x3x3 がそのまま読みとれる。
 
-    fig, boxes, letters = _new_panel()
-    cube = rubik.M(rubik.do("RUR'U'", state.solved()))
-    _paint_list_panel(boxes, letters, cube)
-
-    for i, (f, r, c) in enumerate(_STICKERS):
-        want = cube[f][r][c]
-        assert letters[i].get_text() == want, (f, r, c)
-        assert boxes[i].get_facecolor()[:3] == COLOR_TO_RGB[want], (f, r, c)
-
-    plt.close(fig)
-
-
-def test_panel_lays_out_3x3_as_3x3():
-    """1つの面の中では、縦横の添字がそのまま升目の位置になる。
-
-    col が増えると右へ、row が増えると下へ。展開図のような
-    面ごとの向きの入れかえをしない、というのがこのパネルの約束。
+    面ごとに向きを入れかえないので、書かれている順に読むだけで
+    cube[面][縦][横] に戻せる。
     """
-    fig, boxes, _ = _new_panel()
-    at = {s: boxes[i].get_xy() for i, s in enumerate(_STICKERS)}
+    cube = rubik.M(rubik.do("RUR'U'", state.solved()))
+    lines = state.faces(cube).split("\n")[1:]     # 見出しを除く3段
 
-    for face in range(6):
-        for row in range(3):
-            for col in range(2):
-                left = at[(face, row, col)]
-                right = at[(face, row, col + 1)]
-                assert right[0] > left[0], f"{face}面 col が右に伸びていない"
-                assert right[1] == left[1], f"{face}面 同じ段が同じ高さでない"
-
-        for col in range(3):
-            for row in range(2):
-                upper = at[(face, row, col)]
-                lower = at[(face, row + 1, col)]
-                assert lower[1] < upper[1], f"{face}面 row が下に伸びていない"
-                assert lower[0] == upper[0], f"{face}面 同じ列が同じ横位置でない"
-
-    plt.close(fig)
+    for row, line in enumerate(lines):
+        letters = line.split()                    # 空白で切ると18枚ならぶ
+        assert len(letters) == 18, line
+        for face in range(6):
+            for col in range(3):
+                assert letters[face * 3 + col] == cube[face][row][col], \
+                    f"{face}面 縦{row} 横{col} がずれている"
 
 
-def test_panel_puts_the_faces_in_order():
-    """6面が 0 から順に、左上から2列ずつ並ぶ。"""
-    from rubik._window import _PANEL_COLS
-
-    fig, boxes, _ = _new_panel()
-    corner = {f: boxes[_STICKERS.index((f, 0, 0))].get_xy() for f in range(6)}
-
-    for face in range(6):
-        grid_row, grid_col = divmod(face, _PANEL_COLS)
-        # 同じ段の面は同じ高さ、右の面ほど x が大きい
-        for other in range(6):
-            o_row, o_col = divmod(other, _PANEL_COLS)
-            if o_row == grid_row and o_col > grid_col:
-                assert corner[other][0] > corner[face][0], (face, other)
-            if o_col == grid_col and o_row > grid_row:
-                assert corner[other][1] < corner[face][1], (face, other)
-
-    plt.close(fig)
+def test_faces_columns_line_up():
+    """等幅で並べたとき、どの行も桁がそろう。"""
+    for cube in (state.solved(), rubik.shuffle(state.solved(), seed=5)):
+        lines = state.faces(cube).split("\n")
+        widths = {len(line.rstrip()) for line in lines[1:]}
+        assert len(widths) == 1, f"段ごとに幅が違う: {widths}"
+        # 見出しの行も同じ幅に収まっている
+        assert len(lines[0]) == len(lines[1]), (lines[0], lines[1])
 
 
-def test_ink_is_readable():
-    """明るい色には黒、暗い色には白の字を選ぶ。"""
-    from rubik._window import _ink_for
-    from rubik.geometry import COLOR_TO_RGB
-
-    assert _ink_for(COLOR_TO_RGB["W"]) == "black"   # 白
-    assert _ink_for(COLOR_TO_RGB["Y"]) == "black"   # 黄
-    assert _ink_for(COLOR_TO_RGB["O"]) == "black"   # 橙
-    assert _ink_for(COLOR_TO_RGB["G"]) == "white"   # 緑
-    assert _ink_for(COLOR_TO_RGB["B"]) == "white"   # 青
-    assert _ink_for(COLOR_TO_RGB["R"]) == "white"   # 赤
+def test_faces_checks_its_input():
+    """おかしなキューブを渡すと、いつもの日本語 assert で止まる。"""
+    try:
+        state.faces("リストじゃない")
+    except AssertionError as e:
+        assert "リストで渡してください" in str(e), str(e)
+    else:
+        raise AssertionError("assert が出なかった")
 
 
 def _visible_colors(view_name):

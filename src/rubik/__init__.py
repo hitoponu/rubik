@@ -80,7 +80,7 @@ from . import viewer as _viewer
 from .state import (
     UP, LEFT, FRONT, RIGHT, BACK, DOWN,
     FACE_NAMES, COLORS, SOLVED_COLORS,
-    check, net,
+    check, net, faces,
 )
 
 # --- 操作の部品 -------------------------------------------------------
@@ -287,7 +287,7 @@ __all__ = [
     # リスト表現
     "UP", "LEFT", "FRONT", "RIGHT", "BACK", "DOWN",
     "FACE_NAMES", "COLORS", "SOLVED_COLORS",
-    "check", "net", "show", "solved", "shuffle", "is_solved",
+    "check", "net", "faces", "show", "solved", "shuffle", "is_solved",
     # 外側の面を回す18通り
     "U", "Ui", "U2",
     "D", "Di", "D2",

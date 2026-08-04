@@ -126,6 +126,32 @@ def is_solved(cube):
     return cube == solved()
 
 
+def faces(cube):
+    """面を 0 から順に、横1列に並べた文字列を作る。
+
+        0 U      1 L      2 F      3 R      4 B      5 D
+       W W W    O O O    G G G    R R R    B B B    Y Y Y
+       W W W    O O O    G G G    R R R    B B B    Y Y Y
+       W W W    O O O    G G G    R R R    B B B    Y Y Y
+
+    展開図 (net) とちがって、面ごとに向きを入れかえない。
+    3x3 はそのまま 3x3 なので、cube[面][縦][横] の添字が
+    そのまま文字の位置になる。3Dの窓の下に出しているのもこれ。
+    """
+    check(cube)
+
+    gap = "    "          # 面と面のあいだ
+    width = 5             # 「W W W」で5文字
+
+    lines = [gap.join(f"{face} {FACE_NAMES[face]}".center(width)
+                      for face in range(6))]
+
+    for row in range(3):
+        lines.append(gap.join(" ".join(cube[face][row]) for face in range(6)))
+
+    return "\n".join(lines)
+
+
 def net(cube):
     """展開図の形にならべた文字列を作って返す。
 

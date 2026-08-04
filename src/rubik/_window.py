@@ -1,6 +1,6 @@
 """3Dグラフィクスの窓そのもの。別プロセスとして動く。
 
-窓は左右に分かれていて、左が 3D のキューブ、右がリスト表現の升目。
+窓は上下に分かれていて、上が 3D のキューブ、下がリスト表現の文字。
 
     python -m rubik._window
 
@@ -28,11 +28,10 @@ import sys
 import threading
 
 import matplotlib.pyplot as plt
-from matplotlib.patches import Rectangle
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 
 from .geometry import COLOR_TO_RGB, VIEWS, sticker_corners
-from .state import FACE_NAMES
+from .state import faces
 
 # 親から届いた指示を置いておく場所。
 # 標準入力を読む係と、絵を描く係の受けわたしに使う。
@@ -113,76 +112,6 @@ def _colors_of(cube):
     return colors
 
 
-def _ink_for(rgb):
-    """その色の上に字を書くとき、黒と白のどちらが読みやすいかを返す。"""
-    brightness = 0.299 * rgb[0] + 0.587 * rgb[1] + 0.114 * rgb[2]
-    return "black" if brightness > 0.5 else "white"
-
-
-# リスト表現のパネルの寸法。1マス = 1 として数える。
-_CELL = 1.0
-_GAP_X = 1.1          # 面と面の横のすきま
-_GAP_Y = 1.4          # 縦のすきま (面の名前を書くぶん広め)
-_PANEL_COLS = 2       # 横に2面ずつ並べる。0,1 / 2,3 / 4,5 の順
-
-
-def _build_list_panel(ax, font):
-    """リスト表現を升目で描く。
-
-    展開図ではなく、面を 0 から順に並べる。3x3 はそのまま 3x3 なので、
-
-        cube[面][縦][横]
-
-    の添字が、そのまま升目の位置になる。画面と添字を見くらべやすい。
-
-    あとから色と文字を差しかえられるように、升と文字を _STICKERS と
-    同じ順に並べて返す。
-    """
-    boxes, letters = [], []
-
-    for face in range(6):
-        grid_row, grid_col = divmod(face, _PANEL_COLS)
-        x0 = grid_col * (3 * _CELL + _GAP_X)
-        y0 = -grid_row * (3 * _CELL + _GAP_Y)
-
-        # 面の見出し (0 U など)
-        ax.text(x0 + 1.5 * _CELL, y0 + 0.3, f"{face}   {FACE_NAMES[face]}",
-                ha="center", va="bottom", fontsize=12, color="0.35",
-                **({"fontname": font} if font else {}))
-
-        for row in range(3):
-            for col in range(3):
-                x = x0 + col * _CELL
-                y = y0 - (row + 1) * _CELL
-                box = Rectangle((x, y), _CELL, _CELL,
-                                edgecolor="0.25", linewidth=1.0)
-                ax.add_patch(box)
-                letter = ax.text(x + _CELL / 2, y + _CELL / 2, "",
-                                 ha="center", va="center", fontsize=11)
-                boxes.append(box)
-                letters.append(letter)
-
-    width = _PANEL_COLS * 3 * _CELL + (_PANEL_COLS - 1) * _GAP_X
-    height = 3 * (3 * _CELL) + 2 * _GAP_Y
-
-    ax.set_xlim(-0.4, width + 0.4)
-    ax.set_ylim(-height - 0.4, 1.1)
-    ax.set_aspect("equal")
-    ax.set_axis_off()
-
-    return boxes, letters
-
-
-def _paint_list_panel(boxes, letters, cube):
-    """リスト表現のパネルを、いまのキューブの色と文字に塗りかえる。"""
-    for i, (face, row, col) in enumerate(_STICKERS):
-        letter = cube[face][row][col]
-        rgb = COLOR_TO_RGB.get(letter, (0.5, 0.5, 0.5))
-        boxes[i].set_facecolor(rgb)
-        letters[i].set_text(letter)
-        letters[i].set_color(_ink_for(rgb))
-
-
 def main():
     # まず、窓を出せる描きかたを確保する。これができないと何も始まらない。
     if _use_window_backend() is None:
@@ -202,14 +131,9 @@ def main():
 
     font = _japanese_font()
 
-    # 左に 3D、右にリスト表現を並べる。
-    fig = plt.figure("ルービックキューブ", figsize=(10, 6.5))
-    grid = fig.add_gridspec(1, 2, width_ratios=[1.2, 1], wspace=0.0)
-    ax = fig.add_subplot(grid[0], projection="3d")
-    list_ax = fig.add_subplot(grid[1])
-
-    boxes, letters = _build_list_panel(list_ax, font)
-    _paint_list_panel(boxes, letters, first["cube"])
+    # 上に 3D のキューブ、下にリスト表現の文字を並べる。
+    fig = plt.figure("ルービックキューブ", figsize=(7.5, 7))
+    ax = fig.add_subplot(projection="3d")
 
     # 54枚のステッカーを、四角形の集まりとして1回だけ作る。
     # あとはこの入れ物の色を塗りかえるだけにする。
@@ -236,18 +160,24 @@ def main():
     look("UFR")
 
     # 見た目の調整。目盛りや枠は消して、キューブだけが浮かぶようにする。
-    ax.set_xlim(-1.85, 1.85)
-    ax.set_ylim(-1.85, 1.85)
-    ax.set_zlim(-1.85, 1.85)
+    ax.set_xlim(-1.62, 1.62)
+    ax.set_ylim(-1.62, 1.62)
+    ax.set_zlim(-1.62, 1.62)
     ax.set_box_aspect((1, 1, 1))
     ax.set_axis_off()
-    fig.subplots_adjust(left=0.0, right=0.98, bottom=0.04, top=1.0)
+    fig.subplots_adjust(left=0.0, right=1.0, bottom=0.30, top=1.0)
 
-    # 3D のほうの下に、操作の案内を出す
+    # キューブの下に操作の案内
     caption = "ドラッグで回せます" if font else "drag to rotate"
-    ax.text2D(0.5, 0.02, caption, transform=ax.transAxes,
-              ha="center", fontsize=10, color="gray",
-              **({"fontname": font} if font else {}))
+    fig.text(0.5, 0.275, caption, ha="center", va="top",
+             fontsize=10, color="gray",
+             **({"fontname": font} if font else {}))
+
+    # そのさらに下に、リスト表現の文字。
+    # 等幅の書体でないと桁がそろわないので monospace を指定する。
+    listing = fig.text(0.5, 0.225, faces(first["cube"]),
+                       ha="center", va="top",
+                       family="monospace", fontsize=13, linespacing=1.8)
 
     def poll(*_args):
         """ときどき呼ばれて、親から指示が届いていないか確かめる係。
@@ -277,7 +207,7 @@ def main():
 
         if new_cube is not None:
             stickers.set_facecolor(_colors_of(new_cube))
-            _paint_list_panel(boxes, letters, new_cube)
+            listing.set_text(faces(new_cube))
         if new_view is not None:
             look(new_view)
 
