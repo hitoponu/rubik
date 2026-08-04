@@ -63,13 +63,14 @@ def test_assert_messages():
     # 形は合っているが、中身が色になっていない
     for wrong in (0, "X", "WW", "", None, ["W"], "w"):
         c = cube_mod.solved()
-        c[2][1][0] = wrong               # F面 の 縦1 横0 を壊す
+        c[cube_mod.FRONT][1][0] = wrong          # F面 の 縦1 横0 を壊す
         try:
             moves.U(c)
         except AssertionError as e:
             message = str(e)
             assert "どれかにしてください" in message, message
-            assert "cube[2][1][0]" in message, message   # 場所を教えてくれる
+            # 場所を教えてくれる
+            assert f"cube[{cube_mod.FRONT}][1][0]" in message, message
             assert "F面" in message, message
             assert repr(wrong) in message, message       # 実際の値も教えてくれる
         else:

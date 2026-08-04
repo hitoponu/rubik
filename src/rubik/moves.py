@@ -52,7 +52,7 @@ def _face_cycles(face):
 # i は 0, 1, 2 と動いて、3枚ぶんの巡回をまとめて作っている。
 #
 # U と D は添字がそのまま (2-i のようなひっくり返しが出てこない)。
-# 展開図の中段を L, F, R, B の順に並べたご褒美。
+# まわりの4面 (F, R, B, L) の座標が、ぐるっと一周そろっているおかげ。
 _SIDE_CYCLES = {
     "U": [[(FRONT, 0, i), (LEFT, 0, i), (BACK, 0, i), (RIGHT, 0, i)] for i in range(3)],
     "D": [[(FRONT, 2, i), (RIGHT, 2, i), (BACK, 2, i), (LEFT, 2, i)] for i in range(3)],

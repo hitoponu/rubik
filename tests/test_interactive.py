@@ -181,8 +181,8 @@ def test_cube_gets_and_sets():
 
     # 返ってくるのは中身そのものなので、書きかえると状態が変わる
     rubik.solved()
-    rubik.cube()[2][0][0] = "R"
-    assert rubik.cube()[2][0][0] == "R"
+    rubik.cube()[rubik.FRONT][0][0] = "W"     # F面 (緑) の1枚を白に
+    assert rubik.cube()[rubik.FRONT][0][0] == "W"
     assert not rubik.is_solved()
     rubik.solved()
 

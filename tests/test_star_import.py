@@ -80,7 +80,7 @@ def test_cube_shows_the_real_state():
     # 添字でも読める
     solved()                                   # noqa: F405
     R()                                        # noqa: F405
-    assert cube()[2][0] == ["G", "G", "Y"], cube()[2][0]   # noqa: F405
+    assert cube()[FRONT][0] == ["G", "G", "Y"], cube()[FRONT][0]   # noqa: F405
 
 
 def test_cube_can_also_set():
@@ -137,7 +137,7 @@ def test_classes_and_constants_work():
 
     assert isinstance(Viewer(), rubik.Viewer)  # noqa: F405
 
-    assert (UP, LEFT, FRONT, RIGHT, BACK, DOWN) == (0, 1, 2, 3, 4, 5)   # noqa: F405
+    assert (UP, FRONT, RIGHT, BACK, LEFT, DOWN) == (0, 1, 2, 3, 4, 5)   # noqa: F405
     assert set(COLORS) == {"B", "Y", "R", "W", "G", "O"}                # noqa: F405
     assert FACE_NAMES[FRONT] == "F"            # noqa: F405
     assert len(ALL_MOVES) == 27                # noqa: F405
