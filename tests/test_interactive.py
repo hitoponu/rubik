@@ -153,11 +153,35 @@ def test_solved_and_shuffle_set_the_module_cube():
     assert rubik.cube == state.solved()
 
     assert rubik.shuffle(seed=42) is None
-    got = rubik.cube
+    # rubik.cube は入れ物を取りかえずに中身だけ入れかわるので、
+    # あとで見くらべたいときは写しを取っておく
+    got = copy.deepcopy(rubik.cube)
     assert got != state.solved()
     # seed が同じなら何度でも同じ配置
     rubik.shuffle(seed=42)
     assert rubik.cube == got
+
+
+def test_module_cube_keeps_its_identity():
+    """操作しても rubik.cube の入れ物 (リストそのもの) は取りかわらない。
+
+    from rubik import * で cube を取りこんだ人が、古い入れ物を指したまま
+    取り残されないようにするため。詳しくは tests/test_star_import.py。
+    """
+    rubik.cube = state.solved()      # ここは入れ物ごと差しかえる
+    container = rubik.cube
+
+    for step in (rubik.R, rubik.M, rubik.solved, rubik.shuffle):
+        step()
+        assert rubik.cube is container, f"{step.__name__}() で入れ物が変わった"
+
+    rubik.do("RUR'U'")
+    assert rubik.cube is container
+
+    # 中身だけ入れかえる書き方でも、入れ物は同じまま
+    rubik.cube[:] = state.solved()
+    assert rubik.cube is container
+    assert rubik.is_solved()
 
 
 def test_state_changing_calls_return_nothing():

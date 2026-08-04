@@ -256,11 +256,47 @@ after = rubik.shuffle(before, times=3)   # 渡せば新しいリストを返す
 rubik.R()
 rubik.cube                 # いまの 6x3x3 リスト
 rubik.cube[2][0][0]        # F面 (前) の左上のステッカー
-rubik.cube = x             # 差しかえてもよい
+rubik.cube[:] = x          # 中身を丸ごと入れかえる
 ```
 
 **`rubik.cube` を直接書きかえたときは、窓は追随しない。**
 描き直したければ `rubik.update()` を呼ぶ。
+
+操作しても**入れ物のリストそのものは取りかわらない**（中身だけ入れかわる）。
+そのおかげで `from rubik import *` が使える（後述）。
+いまの状態を取っておきたいときは、写しを取る。
+
+```python
+import copy
+before = copy.deepcopy(rubik.cube)
+```
+
+### `from rubik import *` で使う
+
+`rubik.` を毎回書かずに済ませたいときは、こう書ける。
+
+```python
+from rubik import *
+
+R()
+U()
+do("RUR'U'", times=6)
+cube                       # これも同じキューブを指している
+show()
+is_solved()
+```
+
+**`cube` は取りこんだあとも、いまの状態を指しつづける。**
+操作のたびに新しいリストを作って入れ直すのではなく、
+同じ入れ物の中身だけを入れかえているため。
+
+1つだけ注意。中身を丸ごと入れかえるときは `cube = x` ではなく
+**`cube[:] = x`** と書くこと。前者だと入れ物ごと取りかわってしまい、
+`rubik.cube` と別のものになる。
+
+入ってくる名前は58個で、組み込み関数と衝突するものは無い。
+ただし `E` や `S` のような1文字の名前も含まれるので、
+同じ名前の変数を使っていると上書きされる。
 
 完成しているかどうかは `rubik.is_solved()` で調べる。
 
@@ -501,7 +537,8 @@ macOS では、窓を持つプログラムは「メインの流れ」を窓の�
 
 ```
 uv run python tests/test_moves.py         # 28件  リスト表現と27通りの操作
-uv run python tests/test_interactive.py   # 23件  rubik.cube、do()、Cube
+uv run python tests/test_interactive.py   # 24件  rubik.cube、do()、Cube
+uv run python tests/test_star_import.py   # 10件  from rubik import * で使う
 uv run python tests/test_viewer.py        # 11件  3Dグラフィクス
 ```
 

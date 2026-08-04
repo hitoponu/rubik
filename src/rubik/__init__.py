@@ -27,6 +27,11 @@
 rubik.cube を直接書きかえたときは窓が追随しない。
 描き直したければ rubik.update() を呼ぶ。
 
+    from rubik import *           # rubik. を省いて書くこともできる
+
+    R()
+    cube                          # これも同じキューブを指している
+
 状態を変える呼び出し (R() や do()、solved()、shuffle()) は値を返さない。
 Jupyter Notebook でセルに書いたとき、6x3x3 のリストがだらだら表示される
 のを避けるため。いまの状態は rubik.cube で見る。
@@ -96,6 +101,15 @@ from .viewer import Viewer, reset_UFR, reset_DBL, wait, close
 #
 # 直接読んでよいし、書きかえてもよい。
 # ただし書きかえても窓は追随しないので、描き直したければ update() を呼ぶ。
+#
+# 中身を丸ごと入れかえたいときは
+#
+#     rubik.cube[:] = x        (中身だけ入れかえる。おすすめ)
+#     rubik.cube = x           (入れ物ごと取りかえる)
+#
+# のどちらでもよいが、from rubik import * を使っているなら上を選ぶこと。
+# 下のように入れ物ごと取りかえると、取りこんだほうの名前 cube が
+# 古い入れ物を指したまま取り残されてしまう。
 # ----------------------------------------------------------------------
 
 cube = _state.solved()
@@ -111,18 +125,33 @@ def _current():
 
 
 def _apply(new_cube):
-    """rubik.cube を差しかえて、3D の窓も描き直す。
+    """rubik.cube を新しい状態にして、3D の窓も描き直す。
 
     窓がまだ一度も開いていなければ、ここで開く。
     引数を省いた呼び出し (R() や solved()、shuffle() など) は、
     みなこれを通る。
+
+    ここで cube = new_cube と書かずに cube[:] = new_cube と書いているのは、
+    入れ物のリストそのものを取りかえないようにするため。
+
+        from rubik import *
+
+    と書くと、そのときの rubik.cube が名前 cube に取りこまれる。
+    もし操作のたびに新しいリストを作って入れ直していると、取りこまれた
+    ほうは古いリストを指したまま取り残されてしまう。中身だけを入れかえれば、
+    どちらの名前も同じ入れ物を指したままなので、ずれない。
 
     値は返さない。Jupyter Notebook はセルの最後に書いた式の値をそのまま
     画面に出すので、ここで値を返すと 6x3x3 のリストがだらだら表示されて
     しまうため。いまの状態がほしいときは rubik.cube を見る。
     """
     global cube
-    cube = new_cube
+
+    if isinstance(cube, list):
+        cube[:] = new_cube      # 入れ物はそのまま、中身だけ入れかえる
+    else:
+        cube = new_cube         # リストですらなくなっていたら、作り直す
+
     _viewer.update(cube)
 
 
@@ -143,7 +172,7 @@ def _make_move(name):
     def move(cube=None):
         if cube is not None:
             return turn(cube)            # 渡されたキューブを回して、返す
-        _apply(turn(_current()))     # rubik.cube を回して窓も更新。何も返さない
+        _apply(turn(_current()))         # rubik.cube を回して窓も更新。何も返さない
 
     move.__name__ = name
     move.__doc__ = (
@@ -252,6 +281,8 @@ def update(cube=None):
 
 
 __all__ = [
+    # いま rubik が持っているキューブ
+    "cube",
     # リスト表現
     "UP", "LEFT", "FRONT", "RIGHT", "BACK", "DOWN",
     "FACE_NAMES", "COLORS", "SOLVED_COLORS",
