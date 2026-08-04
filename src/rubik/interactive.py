@@ -28,7 +28,12 @@ from .viewer import Viewer
 
 
 class Cube:
-    """1つのルービックキューブ。"""
+    """1つのルービックキューブ。
+
+    状態を変えるメソッド (回す、solved、shuffle、do、set) は値を返さない。
+    Jupyter Notebook のセルで c.R() と書いたときに、6x3x3 のリストが
+    だらだら表示されるのを避けるため。いまの状態は c.cube で見る。
+    """
 
     def __init__(self, cube=None, show3d=False):
         """完成状態のキューブを作る。
@@ -59,13 +64,11 @@ class Cube:
         _state.check(cube)
         self.cube = copy.deepcopy(cube)
         self._draw()
-        return self.cube
 
     def solved(self):
         """完成状態に戻す。"""
         self.cube = _state.solved()
         self._draw()
-        return self.cube
 
     def shuffle(self, times=20, seed=None):
         """完成状態からでたらめに回して、ぐちゃぐちゃにする。
@@ -74,7 +77,6 @@ class Cube:
         """
         self.cube = _moves.shuffle(times=times, seed=seed)
         self._draw()
-        return self.cube
 
     def do(self, sequence, times=1):
         """手順をまとめて実行する。
@@ -84,7 +86,6 @@ class Cube:
         """
         self.cube = _moves.do(sequence, self.cube, times=times)
         self._draw()
-        return self.cube
 
     def show(self):
         """展開図を文字で表示する。"""
@@ -154,13 +155,13 @@ def _make_move_method(name):
     def method(self):
         self.cube = turn(self.cube)
         self._draw()
-        return self.cube
 
     method.__name__ = name
     method.__qualname__ = f"Cube.{name}"
     method.__doc__ = (
         (turn.__doc__ or "").rstrip()
         + "\n\n        このキューブ自身が変わる。窓があれば描き直す。"
+          "\n        値は返さない。いまの状態は c.cube で見る。"
     )
     return method
 

@@ -251,8 +251,11 @@ def do(sequence, cube=None, times=1):
     cube を渡すとそのキューブから、渡さなければ完成状態から始める。
     times はくり返す回数。
 
-        cube = rubik.do("RUR'U'", cube)
-        cube = rubik.do("RUR'U'", cube, times=6)   # 6回くり返すと元に戻る
+        cube = do("RUR'U'", cube)
+        cube = do("RUR'U'", cube, times=6)   # 6回くり返すと元に戻る
+
+    これは中身のほうの関数で、いつでも新しいリストを返す。
+    rubik.do() のほうは、キューブを省くと rubik.cube を回して何も返さない。
     """
     assert isinstance(times, int) and not isinstance(times, bool) and times >= 0, \
         "do の times は 0 以上の整数にしてください。"
@@ -278,9 +281,13 @@ def shuffle(cube=None, times=20, seed=None):
     times は回す回数。seed に数を渡すと、毎回まったく同じ回しかたになる
     (授業で全員に同じ配置を配りたいときなどに使う)。
 
-        cube = rubik.shuffle()             # 20手でぐちゃぐちゃに
-        cube = rubik.shuffle(times=5)      # 5手だけ
-        cube = rubik.shuffle(seed=42)      # 何度やっても同じ配置
+        cube = shuffle()             # 20手でぐちゃぐちゃに
+        cube = shuffle(times=5)      # 5手だけ
+        cube = shuffle(seed=42)      # 何度やっても同じ配置
+
+    これは中身のほうの関数で、いつでも新しいリストを返す。
+    rubik.shuffle() のほうは、キューブを省くと rubik.cube を差しかえて
+    何も返さない。
 
     18通りの中からその都度1つを選ぶだけなので、R のすぐあとに Ri が来て
     打ち消しあうこともある。それでも times が20もあればじゅうぶん混ざる。

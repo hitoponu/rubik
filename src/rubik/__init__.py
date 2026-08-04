@@ -27,6 +27,10 @@
 rubik.cube を直接書きかえたときは窓が追随しない。
 描き直したければ rubik.update() を呼ぶ。
 
+状態を変える呼び出し (R() や do()、solved()、shuffle()) は値を返さない。
+Jupyter Notebook でセルに書いたとき、6x3x3 のリストがだらだら表示される
+のを避けるため。いまの状態は rubik.cube で見る。
+
 
 2. キューブを自分で作る使いかた
 -------------------------------
@@ -46,7 +50,7 @@ rubik.cube を直接書きかえたときは窓が追随しない。
 キューブを引数に渡すと、操作は「もらったリストは書きかえず、
 操作後の新しいリストを返す」ふつうの関数としてはたらく。窓も触らない。
 
-    cube = rubik.solved()
+    cube = rubik.Cube().cube      # 完成状態のリストを1つもらう
     after = rubik.R(cube)         # cube はそのまま残る
 
 
@@ -99,12 +103,18 @@ def _current():
     return cube
 
 
+# 下の2つはどちらも値を返さない。
+#
+# Jupyter Notebook はセルの最後に書いた式の値をそのまま画面に出すので、
+# rubik.R() が値を返すと 6x3x3 のリストがだらだら表示されてしまう。
+# 状態を変える呼び出しは、そろって何も返さないことにした。
+# いまの状態がほしいときは rubik.cube を見る。
+
 def _turned(new_cube):
     """回したあとの後始末。状態を進めて、窓を開いて描き直す。"""
     global cube
     cube = new_cube
     _viewer.update(cube)      # 窓がまだ一度も開いていなければ、ここで開く
-    return cube
 
 
 def _prepared(new_cube):
@@ -117,7 +127,6 @@ def _prepared(new_cube):
     cube = new_cube
     if _viewer._alive():
         _viewer.update(cube)
-    return cube
 
 
 # ----------------------------------------------------------------------
@@ -136,14 +145,15 @@ def _make_move(name):
 
     def move(cube=None):
         if cube is not None:
-            return turn(cube)                    # 渡されたキューブを回して返すだけ
-        return _turned(turn(_current()))     # rubik.cube を回して窓も更新
+            return turn(cube)            # 渡されたキューブを回して、返す
+        _turned(turn(_current()))        # rubik.cube を回して窓も更新。何も返さない
 
     move.__name__ = name
     move.__doc__ = (
         (turn.__doc__ or "").rstrip()
         + "\n\n    引数を省くと rubik.cube を回して、3D の窓も描き直す。"
-          "\n    キューブを渡すと、それを回した新しいリストを返す (窓は触らない)。"
+          "\n    このとき値は返さない。いまの状態は rubik.cube で見る。"
+          "\n\n    キューブを渡すと、それを回した新しいリストを返す (窓は触らない)。"
     )
     return move
 
@@ -167,36 +177,42 @@ def do(sequence, cube=None, times=1):
         rubik.do("RUR'U'", times=6)     # 6回くり返すと元に戻る
 
         after = rubik.do("RU", before)  # 渡せば新しいリストを返すだけ
+
+    引数を省いたときは値を返さない。いまの状態は rubik.cube で見る。
     """
     if cube is not None:
         return _moves.do(sequence, cube, times=times)
-    return _turned(_moves.do(sequence, _current(), times=times))
+    _turned(_moves.do(sequence, _current(), times=times))
 
 
 def solved():
-    """完成状態にして、そのリストを返す。
+    """rubik.cube を完成状態にする。
 
         rubik.solved()
+        rubik.cube            # 完成状態のリスト
 
-    rubik.cube が完成状態になる。窓が開いていれば描き直すが、
+    値は返さない。窓が開いていれば描き直すが、
     窓がまだ無いときに、これだけで開くことはしない。
     """
-    return _prepared(_state.solved())
+    _prepared(_state.solved())
 
 
 def shuffle(cube=None, times=20, seed=None):
-    """完成状態からでたらめに回して、ぐちゃぐちゃにしたキューブを返す。
+    """でたらめに回して、ぐちゃぐちゃにする。
 
     seed に数を渡すと、何度やってもまったく同じ配置になる。
 
         rubik.shuffle()                    # rubik.cube がぐちゃぐちゃになる
         rubik.shuffle(seed=42)             # 何度やっても同じ配置
+        rubik.cube                         # 結果のリスト
 
-        after = rubik.shuffle(before, times=5)   # 渡せば返すだけ
+        after = rubik.shuffle(before, times=5)   # 渡せば新しいリストを返す
+
+    引数を省いたときは値を返さない。
     """
     if cube is not None:
         return _moves.shuffle(cube, times=times, seed=seed)
-    return _prepared(_moves.shuffle(times=times, seed=seed))
+    _prepared(_moves.shuffle(times=times, seed=seed))
 
 
 def show(cube=None):

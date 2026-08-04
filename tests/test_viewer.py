@@ -14,6 +14,7 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 
 import rubik
+from rubik import state
 from rubik.geometry import FACE_BASIS, cubie_position, sticker_corners
 from rubik._window import _STICKERS, _colors_of
 
@@ -26,7 +27,7 @@ def test_sticker_list():
 
 def test_colors_follow_the_cube():
     """_colors_of がキューブの中身どおりの色を、正しい順番で返す。"""
-    cube = rubik.solved()
+    cube = state.solved()
     colors = _colors_of(cube)
     assert len(colors) == 54
 
@@ -86,7 +87,7 @@ def test_repaint_does_not_move_the_camera():
     利用者がマウスで動かした角度 (elev, azim) を真似して設定しておき、
     色を塗りかえて描きなおしても、その角度が保たれることを確かめる。
     """
-    cube = rubik.solved()
+    cube = state.solved()
     fig = plt.figure(figsize=(4, 4))
     ax = fig.add_subplot(projection="3d")
     stickers = Poly3DCollection(
@@ -115,7 +116,7 @@ def test_repaint_does_not_move_the_camera():
 
 def test_json_round_trip():
     """親から子へ送るときの形 (JSON 1行) で、中身が変わらない。"""
-    cube = rubik.Fi(rubik.U(rubik.solved()))
+    cube = rubik.Fi(rubik.U(state.solved()))
     for message in ({"cube": cube}, {"view": "UFR"}, {"view": "DBL"}):
         line = json.dumps(message)
         assert "\n" not in line, "1行に収まらないと送れない"
@@ -175,7 +176,7 @@ def _visible_colors(view_name):
     from rubik.geometry import COLOR_TO_RGB, VIEWS
 
     background = (0.35, 0.35, 0.40)
-    cube = rubik.solved()
+    cube = state.solved()
 
     fig = plt.figure(figsize=(4, 4), dpi=80)
     fig.patch.set_facecolor(background)

@@ -115,8 +115,9 @@ def test_no_argument_moves_the_module_cube():
     rubik.U()
     assert rubik.cube == moves.U(moves.R(state.solved()))
 
-    # 戻り値もいまのキューブ
-    assert rubik.Ui() == rubik.cube
+    # 値は返さない
+    assert rubik.Ui() is None
+    assert rubik.cube == moves.Ui(moves.U(moves.R(state.solved())))
 
 
 def test_argument_form_stays_pure():
@@ -148,14 +149,82 @@ def test_module_do():
 def test_solved_and_shuffle_set_the_module_cube():
     """solved() と shuffle() は rubik.cube を差しかえる。"""
     rubik.cube = moves.shuffle(times=5, seed=1)
-    assert rubik.solved() == state.solved()
+    assert rubik.solved() is None
     assert rubik.cube == state.solved()
 
-    got = rubik.shuffle(seed=42)
-    assert rubik.cube == got
-    assert rubik.cube != state.solved()
+    assert rubik.shuffle(seed=42) is None
+    got = rubik.cube
+    assert got != state.solved()
     # seed が同じなら何度でも同じ配置
-    assert rubik.shuffle(seed=42) == got
+    rubik.shuffle(seed=42)
+    assert rubik.cube == got
+
+
+def test_state_changing_calls_return_nothing():
+    """状態を変える呼び出しは、そろって何も返さない。
+
+    Jupyter Notebook はセルの最後に書いた式の値を画面に出すので、
+    ここで値を返すと 6x3x3 のリストがだらだら表示されてしまう。
+    """
+    import contextlib
+    import io
+
+    rubik.cube = state.solved()
+    c = rubik.Cube()
+
+    with contextlib.redirect_stdout(io.StringIO()):   # show() の表示は捨てる
+        # モジュールの18通り
+        for name in moves.MOVE_NAMES:
+            assert getattr(rubik, name)() is None, f"rubik.{name}() が値を返している"
+
+        # モジュールのその他
+        assert rubik.do("RUR'U'") is None
+        assert rubik.solved() is None
+        assert rubik.shuffle(seed=1) is None
+        assert rubik.show() is None
+        assert rubik.update() is None
+        assert rubik.reset_UFR() is None
+        assert rubik.reset_DBL() is None
+        assert rubik.close() is None
+
+        # Cube のメソッド
+        for name in moves.MOVE_NAMES:
+            assert getattr(c, name)() is None, f"Cube.{name}() が値を返している"
+
+        assert c.do("RUR'U'") is None
+        assert c.solved() is None
+        assert c.shuffle(seed=1) is None
+        assert c.set(state.solved()) is None
+        assert c.show() is None
+        assert c.update() is None
+        assert c.reset_UFR() is None
+        assert c.reset_DBL() is None
+        assert c.wait() is None
+        assert c.close() is None
+
+
+def test_value_returning_calls_still_return():
+    """値を取り出すための呼び出しは、これまでどおり値を返す。
+
+    キューブを渡した形は「新しいリストを受け取る」のが目的なので、
+    そこは変えない。
+    """
+    before = state.solved()
+
+    for name in moves.MOVE_NAMES:
+        got = getattr(rubik, name)(before)
+        assert isinstance(got, list), f"rubik.{name}(cube) が値を返していない"
+        rubik.check(got)
+
+    assert isinstance(rubik.do("RUR'U'", before), list)
+    assert isinstance(rubik.shuffle(before, times=3), list)
+
+    # 調べるだけの関数
+    assert rubik.is_solved(before) is True
+    assert isinstance(rubik.net(before), str)
+    assert isinstance(rubik.parse("RUR'U'"), list)
+    assert isinstance(rubik.Cube().is_solved(), bool)
+    assert isinstance(repr(rubik.Cube()), str)
 
 
 def test_is_solved():
@@ -224,9 +293,8 @@ def test_cube_has_all_moves():
 def test_cube_moves_change_itself():
     """メソッドを呼ぶと、そのキューブ自身が変わる。"""
     c = rubik.Cube()
-    got = c.R()
+    assert c.R() is None
     assert c.cube == moves.R(state.solved())
-    assert got == c.cube
 
     c.do("RUR'U'", times=6)
     assert c.cube == moves.R(state.solved()), "do のあと状態がずれている"
@@ -273,7 +341,7 @@ def test_cube_solved_and_shuffle():
 def test_cube_set():
     c = rubik.Cube()
     target = moves.shuffle(times=6, seed=5)
-    c.set(target)
+    assert c.set(target) is None
     assert c.cube == target
     target[1][1][1] = "R"
     assert c.cube[1][1][1] != "R", "渡したリストをそのまま抱えている"

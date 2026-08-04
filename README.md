@@ -229,15 +229,17 @@ cube[面][縦][横]
 ぐちゃぐちゃの状態は `rubik.shuffle()` で作れる。
 
 ```python
-cube = rubik.shuffle()              # 完成状態から20手、でたらめに回す
-cube = rubik.shuffle(times=5)       # 5手だけ
-cube = rubik.shuffle(seed=42)       # 何度やっても同じ配置になる
-cube = rubik.shuffle(cube, times=3) # 今のキューブからさらに3手
+rubik.shuffle()                     # 完成状態から20手、でたらめに回す
+rubik.shuffle(times=5)              # 5手だけ
+rubik.shuffle(seed=42)              # 何度やっても同じ配置になる
+rubik.cube                          # 結果はここに入る
+
+after = rubik.shuffle(before, times=3)   # 渡せば新しいリストを返す
 ```
 
 | 引数 | 既定値 | 意味 |
 |---|---|---|
-| `cube` | `None` | 回しはじめるキューブ。省くと完成状態から |
+| `cube` | `None` | 回しはじめるキューブ。省くと `rubik.cube` を差しかえる |
 | `times` | `20` | 回す回数 |
 | `seed` | `None` | 数を渡すと毎回まったく同じ回しかたになる |
 
@@ -267,9 +269,28 @@ rubik.do("RUR'U'", times=6)
 rubik.is_solved()          # True
 ```
 
-> `rubik.solved()` は「調べる」ではなく「**完成状態にする**」関数なので、
-> `rubik.cube == rubik.solved()` と書くといつでも `True` になってしまう。
-> 出来ぐあいを調べたいときは `is_solved()` を使う。
+> `rubik.solved()` は「調べる」ではなく「**完成状態にする**」関数で、
+> 値を返さない。出来ぐあいを調べたいときは `is_solved()` を使う。
+
+### 値を返すもの、返さないもの
+
+**状態を変える呼び出しは、そろって何も返さない。**
+Jupyter Notebook はセルの最後に書いた式の値を画面に出すので、
+値を返すと 6x3x3 のリストがだらだら表示されてしまうため。
+
+```python
+rubik.R()                  # None。rubik.cube を回す
+rubik.do("RUR'U'")         # None
+rubik.solved()             # None
+rubik.shuffle(seed=1)      # None
+c.R()                      # None。Cube のメソッドも同じ
+
+after = rubik.R(before)    # ← キューブを渡した形は、これまでどおりリストを返す
+rubik.is_solved()          # True / False
+rubik.parse("RUR'U'")      # ['R', 'U', 'Ri', 'Ui']
+```
+
+見わけかたは単純で、**キューブを渡せば値が返り、省けば `rubik.cube` が変わる**。
 
 ## 2. 18通りの操作
 
@@ -333,7 +354,7 @@ rubik.U("リストじゃない")
 rubik.U([[1, 2, 3]] * 6)
 # AssertionError: ルービックキューブは 6x3x3 のリストで渡してください。
 
-cube = rubik.solved()
+cube = rubik.Cube().cube
 cube[2][1][0] = "X"
 rubik.U(cube)
 # AssertionError: ルービックキューブの中身は 'B' 'Y' 'R' 'W' 'G' 'O' のどれかに
