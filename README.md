@@ -41,7 +41,8 @@ Finder で **`start_jupyter.command` をダブルクリック**する。
 
 教育用のルービックキューブ Python ライブラリ。
 
-機能は3つだけ。**リストでの表現**、**27通りの操作**、**マウスで回せる3D表示**。
+機能は3つだけ。**リストでの表現**、**27通りの操作**、**マウスで回せる3D表示**
+（リスト表現を並べて表示）。
 速さより読みやすさを優先していて、わざと遠回りな書き方をしているところがある。
 
 ```python
@@ -442,6 +443,25 @@ rubik.U(cube)
 | `rubik.wait()` | 窓が閉じられるまで待つ |
 | `rubik.close()` | 窓を閉じる |
 
+窓は左右に分かれていて、**左が3Dのキューブ、右がリスト表現**。
+どちらも操作のたびに同時に描き直される。
+
+右のパネルは展開図ではなく、**面を 0 から順に並べて、3×3 はそのまま 3×3**。
+`cube()[面][縦][横]` の添字が、そのまま升目の位置になる。
+
+```
+  0  U        1  L
+ W B O       B O O          横は col が増えると右へ
+ W B G       O O O          縦は row が増えると下へ
+ W R G       O O O
+
+  2  F        3  R
+ ...          ...
+
+  4  B        5  D
+ ...          ...
+```
+
 **窓は最初の操作でひとりでに開く。** `init()` を先に呼ばなくてよい。
 `R()` などの操作だけでなく、`solved()` や `shuffle()` でも開く。
 
@@ -523,7 +543,7 @@ macOS では、窓を持つプログラムは「メインの流れ」を窓の�
 | `src/rubik/interactive.py` | `Cube` クラス |
 | `src/rubik/geometry.py` | リストの添字と3次元空間の位置の対応表 |
 | `src/rubik/viewer.py` | `Viewer` クラスと `init` `update` `wait` `close` |
-| `src/rubik/_window.py` | 窓そのもの（別プロセスで動く） |
+| `src/rubik/_window.py` | 窓そのもの（別プロセスで動く）。3D とリスト表現の2枚 |
 | `src/rubik/__init__.py` | 3通りの使いかたの入口。27通りの関数をここで組み立てる |
 | `setup_mac.command` | macOS の環境構築（uv を入れる）。ダブルクリックで動く |
 | `start_jupyter.command` | macOS で Jupyter Notebook を開く。ダブルクリックで動く |
@@ -537,7 +557,7 @@ macOS では、窓を持つプログラムは「メインの流れ」を窓の�
 uv run python tests/test_moves.py         # 28件  リスト表現と27通りの操作
 uv run python tests/test_interactive.py   # 25件  cube()、do()、Cube
 uv run python tests/test_star_import.py   # 10件  from rubik import * で使う
-uv run python tests/test_viewer.py        # 11件  3Dグラフィクス
+uv run python tests/test_viewer.py        # 16件  3Dグラフィクスとリスト表現パネル
 ```
 
 操作の正しさは、よく知られた「手順の周期」と突き合わせて確かめている。
