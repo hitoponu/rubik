@@ -5,25 +5,20 @@
 以下をコピペで実行。
 ```bash
 git
+cd ~/Desktop
 git clone https://github.com/hitoponu/rubik.git
-cd rubik
-./setup_mac.command
 ```
 
-最後の行のかわりに、Finder で `rubik` フォルダを開いて
-**`setup_mac.command` をダブルクリック**してもよい。
+Finder で `rubik` フォルダを開いて
+**`setup_mac.command` をダブルクリック**する。
 
 ## 動かし方
 
 Finder で **`start_jupyter.command` をダブルクリック**する。
 
-ターミナルからでもよい。
-
-```bash
-./start_jupyter.command
-```
-
 ブラウザ上でjupyter notebookが開いたらexamplesのdemo.ipynbを起動する。
+
+ターミナルとブラウザ上のnodebookが開く。
 
 ![examplesを開く](images/jupyter_examples.png)
 ![demoを開く](images/jupyter_demo.png)
@@ -31,6 +26,15 @@ Finder で **`start_jupyter.command` をダブルクリック**する。
 > **自分でプログラムを書く場合**
 > ![newを押す](images/jupyter_new.png)
 > ![python3を選ぶ](images/jupyter_new_python3.png)
+
+## 閉じ方
+
+プログラムを保存しましょう。
+![saveする](images/jupyter_save.png)
+
+jupyterのタブを閉じ、ターミナルに移動し、画像の通りターミナルを閉じましょう。
+
+![ターミナルを閉じる](images/jupyter_terminal_kill.png)
 
 <br>
 <br>
