@@ -2,6 +2,7 @@
 
     rubik.init()          窓を開く
     rubik.update(cube)    映すキューブを更新する (向きは変わらない)
+    rubik.list_view(True) キューブの下にリスト表現を出す
     rubik.reset_UFR()     見る向きを U・F・R が見える向きに戻す
     rubik.reset_DBL()     見る向きを D・B・L が見える向きに戻す
     rubik.wait()          窓が閉じられるまで待つ
@@ -33,6 +34,9 @@ class Viewer:
         # 窓のプロセス。まだ開いていなければ None。
         self._process = None
 
+        # キューブの下にリスト表現の文字を出すか。ふつうは出さない。
+        self._list_view = False
+
         # 一度でも窓を開こうとしたか。
         # 画面の無い場所 (Google Colab など) では窓を開けないので、操作の
         # たびに開こうとするとプロセスが無駄に増えてしまう。だから
@@ -48,7 +52,7 @@ class Viewer:
     def _send(self, message):
         """指示を1行の JSON にして窓のプロセスに送る。窓が無ければ何もしない。
 
-        message は {"cube": [...]} か {"view": "UFR"} のどちらか。
+        message は {"cube": [...]}、{"view": "UFR"}、{"list": True} のどれか。
         """
         if not self.alive():
             return
@@ -106,7 +110,7 @@ class Viewer:
         )
         atexit.register(self.close)
 
-        self._send({"cube": cube})
+        self._send({"cube": cube, "list": self._list_view})
 
     def update(self, cube):
         """窓に映すキューブを更新する。
@@ -122,6 +126,21 @@ class Viewer:
             self._send({"cube": cube})
         elif not self._attempted:
             self.init(cube)
+
+    def list_view(self, on=None):
+        """キューブの下にリスト表現の文字を出すかどうか。
+
+            v.list_view()        # いまの設定 (True か False)
+            v.list_view(True)    # 出す
+            v.list_view(False)   # 消す
+
+        ふつうは出さない。出すとそのぶんキューブが小さくなる。
+        設定を渡したときは値を返さない。
+        """
+        if on is None:
+            return self._list_view
+        self._list_view = bool(on)
+        self._send({"list": self._list_view})
 
     def reset_UFR(self):
         """見る向きを、U面・F面・R面が見える向きに戻す。
@@ -187,6 +206,11 @@ def init(cube=None):
 def update(cube):
     """窓に映すキューブを更新する。向きは変わらない。"""
     _default.update(cube)
+
+
+def list_view(on=None):
+    """キューブの下にリスト表現を出すかどうか。引数なしならいまの設定を返す。"""
+    return _default.list_view(on)
 
 
 def reset_UFR():

@@ -1,6 +1,7 @@
 """3Dグラフィクスの窓そのもの。別プロセスとして動く。
 
-窓は上下に分かれていて、上が 3D のキューブ、下がリスト表現の文字。
+上に 3D のキューブ、下にリスト表現の文字。
+リスト表現はふつう出さない。頼まれたときだけ出す。
 
     python -m rubik._window
 
@@ -40,6 +41,7 @@ from .state import faces
 #
 #   {"cube": [...]}    映すキューブを差しかえる
 #   {"view": "UFR"}    見る向きを決まった角度に戻す
+#   {"list": true}     下のリスト表現を出す / 消す
 _inbox = queue.Queue()
 
 # 親との連絡が切れたことを知らせる合図
@@ -132,7 +134,8 @@ def main():
     font = _japanese_font()
 
     # 上に 3D のキューブ、下にリスト表現の文字を並べる。
-    fig = plt.figure("ルービックキューブ", figsize=(7.5, 7))
+    # リスト表現は出さないのがふつうで、頼まれたときだけ出す。
+    fig = plt.figure("ルービックキューブ", figsize=(7.5, 7.5))
     ax = fig.add_subplot(projection="3d")
 
     # 54枚のステッカーを、四角形の集まりとして1回だけ作る。
@@ -165,19 +168,34 @@ def main():
     ax.set_zlim(-1.62, 1.62)
     ax.set_box_aspect((1, 1, 1))
     ax.set_axis_off()
-    fig.subplots_adjust(left=0.0, right=1.0, bottom=0.30, top=1.0)
 
     # キューブの下に操作の案内
-    caption = "ドラッグで回せます" if font else "drag to rotate"
-    fig.text(0.5, 0.275, caption, ha="center", va="top",
-             fontsize=10, color="gray",
-             **({"fontname": font} if font else {}))
+    caption = fig.text(0.5, 0.0, "ドラッグで回せます" if font else "drag to rotate",
+                       ha="center", va="bottom", fontsize=10, color="gray",
+                       **({"fontname": font} if font else {}))
 
     # そのさらに下に、リスト表現の文字。
     # 等幅の書体でないと桁がそろわないので monospace を指定する。
-    listing = fig.text(0.5, 0.225, faces(first["cube"]),
-                       ha="center", va="top",
+    listing = fig.text(0.5, 0.0, faces(first["cube"]),
+                       ha="center", va="bottom",
                        family="monospace", fontsize=13, linespacing=1.8)
+
+    def layout(show_list):
+        """リスト表現を出すかどうかで、場所の割りふりを変える。
+
+        出さないときはキューブが窓いっぱいに広がる。
+        """
+        if show_list:
+            fig.subplots_adjust(left=0.0, right=1.0, bottom=0.30, top=1.0)
+            listing.set_visible(True)
+            listing.set_position((0.5, 0.03))
+            caption.set_position((0.5, 0.275))
+        else:
+            fig.subplots_adjust(left=0.0, right=1.0, bottom=0.05, top=1.0)
+            listing.set_visible(False)
+            caption.set_position((0.5, 0.02))
+
+    layout(bool(first.get("list", False)))
 
     def poll(*_args):
         """ときどき呼ばれて、親から指示が届いていないか確かめる係。
@@ -189,6 +207,7 @@ def main():
         """
         new_cube = None
         new_view = None
+        new_list = None
 
         # 溜まっているぶんをぜんぶ取り出す。
         # 同じ種類が何度も来ていたら、最後のものだけが効く。
@@ -204,14 +223,18 @@ def main():
                 new_cube = item["cube"]
             if "view" in item:
                 new_view = item["view"]
+            if "list" in item:
+                new_list = bool(item["list"])
 
         if new_cube is not None:
             stickers.set_facecolor(_colors_of(new_cube))
             listing.set_text(faces(new_cube))
         if new_view is not None:
             look(new_view)
+        if new_list is not None:
+            layout(new_list)
 
-        if new_cube is not None or new_view is not None:
+        if new_cube is not None or new_view is not None or new_list is not None:
             fig.canvas.draw_idle()
 
     timer = fig.canvas.new_timer(interval=50)

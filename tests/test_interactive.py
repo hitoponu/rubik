@@ -203,6 +203,41 @@ def test_cube_survives_being_imported():
     assert cube() == moves.R(state.solved())
 
 
+def test_list_view_is_off_by_default():
+    """窓の下のリスト表現は、ふつう出さない。"""
+    from rubik.viewer import Viewer
+
+    assert Viewer().list_view() is False, "作ったばかりの窓で表示になっている"
+    assert rubik.Cube().list_view() is False
+    assert rubik.list_view() is False
+
+
+def test_list_view_switches():
+    """list_view() は取り出しと切りかえの両方をする。"""
+    from rubik.viewer import Viewer
+
+    v = Viewer()
+    assert v.list_view(True) is None       # 設定したときは値を返さない
+    assert v.list_view() is True
+    v.list_view(False)
+    assert v.list_view() is False
+
+    # 1 や 0 のような値でも True / False になる
+    v.list_view(1)
+    assert v.list_view() is True
+    v.list_view(0)
+    assert v.list_view() is False
+
+
+def test_cube_remembers_list_view_until_the_window_opens():
+    """窓を持たない Cube でも、設定は覚えておける。"""
+    c = rubik.Cube()
+    assert c._viewer is None
+    c.list_view(True)
+    assert c.list_view() is True, "窓が無いと設定が消えてしまう"
+    assert c._viewer is None, "設定しただけで窓が開いてしまっている"
+
+
 def test_state_changing_calls_return_nothing():
     """状態を変える呼び出しは、そろって何も返さない。
 

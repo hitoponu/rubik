@@ -22,6 +22,7 @@
     rubik.U()
     rubik.do("RUR'U'", times=6)   # 手順をまとめて。6回で元に戻る
     rubik.show()                  # 展開図を文字で見る
+    rubik.list_view(True)         # 窓の下にリスト表現も出す (ふつうは出ない)
     rubik.cube()                  # いまの 6x3x3 リスト
     rubik.cube(x)                 # 差しかえる
 
@@ -94,7 +95,7 @@ from .moves import (
 from .interactive import Cube
 
 # --- 3Dグラフィクス ---------------------------------------------------
-from .viewer import Viewer, reset_UFR, reset_DBL, wait, close
+from .viewer import Viewer, list_view, reset_UFR, reset_DBL, wait, close
 
 
 # ----------------------------------------------------------------------
@@ -304,5 +305,6 @@ __all__ = [
     # キューブを1つのモノとして
     "Cube",
     # 3Dグラフィクス
-    "Viewer", "init", "update", "reset_UFR", "reset_DBL", "wait", "close",
+    "Viewer", "init", "update", "list_view",
+    "reset_UFR", "reset_DBL", "wait", "close",
 ]

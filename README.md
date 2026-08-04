@@ -41,8 +41,7 @@ Finder で **`start_jupyter.command` をダブルクリック**する。
 
 教育用のルービックキューブ Python ライブラリ。
 
-機能は3つだけ。**リストでの表現**、**27通りの操作**、**マウスで回せる3D表示**
-（下にリスト表現の文字を並べて表示）。
+機能は3つだけ。**リストでの表現**、**27通りの操作**、**マウスで回せる3D表示**。
 速さより読みやすさを優先していて、わざと遠回りな書き方をしているところがある。
 
 ```python
@@ -438,15 +437,24 @@ rubik.U(cube)
 |---|---|
 | `rubik.init(cube=None)` | 窓を開く。省くといまのキューブ |
 | `rubik.update(cube=None)` | 映すキューブを更新する。省くといまのキューブ |
+| `rubik.list_view(on=None)` | 下のリスト表現を出すか。省くといまの設定を返す |
 | `rubik.reset_UFR()` | 見る向きを U・F・R が見える向きに戻す |
 | `rubik.reset_DBL()` | 見る向きを D・B・L が見える向きに戻す |
 | `rubik.wait()` | 窓が閉じられるまで待つ |
 | `rubik.close()` | 窓を閉じる |
 
-窓は上下に分かれていて、**上が3Dのキューブ、下がリスト表現の文字**。
-どちらも操作のたびに同時に描き直される。
+窓にはキューブだけが映る。頼めば、その下にリスト表現の文字も出せる。
 
-下に出るのは展開図ではなく、**面を 0 から順に横1列**に並べたもの。
+```python
+rubik.list_view(True)      # 出す
+rubik.list_view(False)     # 消す
+rubik.list_view()          # いまの設定 (True / False)
+```
+
+**ふつうは出さない。** 出すとそのぶんキューブが小さくなるため。
+いつ切りかえてもよく、窓を開く前に決めておくこともできる。
+
+出るのは展開図ではなく、**面を 0 から順に横1列**に並べたもの。
 面ごとに向きを入れかえないので、`cube()[面][縦][横]` の添字が
 そのまま文字の位置になる。
 
@@ -492,7 +500,8 @@ b = rubik.Cube(show3d=True)    # 2つめの窓。並べて見くらべられる
 
 操作の名前はモジュールの関数と同じ27通り。ほかに
 `cube()` `solved()` `shuffle()` `do()` `show()` `is_solved()` と、
-窓むけの `init()` `update()` `reset_UFR()` `reset_DBL()` `wait()` `close()` がある。
+窓むけの `init()` `update()` `list_view()` `reset_UFR()` `reset_DBL()`
+`wait()` `close()` がある。
 
 Jupyter でセルに `c` と書くだけで展開図が出る（`__repr__` が展開図を返す）。
 
@@ -541,7 +550,7 @@ macOS では、窓を持つプログラムは「メインの流れ」を窓の�
 | `src/rubik/interactive.py` | `Cube` クラス |
 | `src/rubik/geometry.py` | リストの添字と3次元空間の位置の対応表 |
 | `src/rubik/viewer.py` | `Viewer` クラスと `init` `update` `wait` `close` |
-| `src/rubik/_window.py` | 窓そのもの（別プロセスで動く）。上が3D、下がリスト表現 |
+| `src/rubik/_window.py` | 窓そのもの（別プロセスで動く）。3D と、任意でリスト表現 |
 | `src/rubik/__init__.py` | 3通りの使いかたの入口。27通りの関数をここで組み立てる |
 | `setup_mac.command` | macOS の環境構築（uv を入れる）。ダブルクリックで動く |
 | `start_jupyter.command` | macOS で Jupyter Notebook を開く。ダブルクリックで動く |
@@ -553,7 +562,7 @@ macOS では、窓を持つプログラムは「メインの流れ」を窓の�
 
 ```
 uv run python tests/test_moves.py         # 28件  リスト表現と27通りの操作
-uv run python tests/test_interactive.py   # 25件  cube()、do()、Cube
+uv run python tests/test_interactive.py   # 28件  cube()、do()、Cube
 uv run python tests/test_star_import.py   # 10件  from rubik import * で使う
 uv run python tests/test_viewer.py        # 16件  3Dグラフィクスと faces()
 ```

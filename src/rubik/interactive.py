@@ -50,6 +50,7 @@ class Cube:
             self._cube = copy.deepcopy(cube)
 
         self._viewer = None
+        self._list_view = False
         if show3d:
             self.init()
 
@@ -118,6 +119,7 @@ class Cube:
         """
         if self._viewer is None:
             self._viewer = Viewer()
+            self._viewer.list_view(self._list_view)
         self._viewer.init(self._cube)
 
     def update(self):
@@ -132,6 +134,20 @@ class Cube:
         """窓を持っていれば描き直す。持っていなければ何もしない。"""
         if self._viewer is not None:
             self._viewer.update(self._cube)
+
+    def list_view(self, on=None):
+        """このキューブの窓に、下のリスト表現を出すかどうか。
+
+            c.list_view()        # いまの設定
+            c.list_view(True)    # 出す
+
+        窓をまだ持っていないときは、覚えておいて開いたときに反映する。
+        """
+        if on is None:
+            return self._list_view
+        self._list_view = bool(on)
+        if self._viewer is not None:
+            self._viewer.list_view(self._list_view)
 
     def reset_UFR(self):
         """見る向きを、U面・F面・R面が見える向きに戻す。"""
