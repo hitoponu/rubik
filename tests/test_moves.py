@@ -7,7 +7,7 @@
 
 import copy
 
-from rubik import cube as cube_mod
+from rubik import state as cube_mod
 from rubik import moves
 from rubik.geometry import cubie_position
 

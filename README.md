@@ -41,17 +41,22 @@ uv run jupyter notebook
 ```python
 import rubik
 
-cube = rubik.solved()      # 完成状態
-cube = rubik.shuffle()     # でたらめに回してぐちゃぐちゃに
-cube = rubik.R(cube)       # 右の面を時計回りに90度
-cube = rubik.Ui(cube)      # 上の面を反時計回りに90度
+rubik.R()                       # 3Dの窓が開いて、右の面が回る
+rubik.U()                       # 続けて上の面
+rubik.do("RUR'U'", times=6)     # 手順をまとめて。6回くり返すと元に戻る
 
-rubik.show(cube)           # 展開図を文字で表示
-
-rubik.init(cube)           # 3Dの窓を開く
-rubik.update(cube)         # 映すキューブを更新
-rubik.wait()               # 窓が閉じられるまで待つ
+rubik.show()                    # 展開図を文字で表示
+rubik.cube                      # いまの 6x3x3 リスト
 ```
+
+使いかたは3通りある。**どれも同じ名前の操作が使える。**
+標準ライブラリの `turtle` と同じ組み立てで、下の段から上の段へ段階的に登れる。
+
+| 段 | 書きかた | 状態を持つのは |
+|---|---|---|
+| 1. いちばん手軽 | `rubik.R()` | `rubik.cube`（rubik が1つ持っている） |
+| 2. キューブを作る | `c = rubik.Cube()` / `c.R()` | その `c` |
+| 3. リストを持ち回る | `after = rubik.R(before)` | 呼び出した側 |
 
 ## 準備
 
@@ -112,12 +117,10 @@ uv run --with notebook jupyter notebook
 ```python
 # セル1
 import rubik
-cube = rubik.shuffle(seed=1)
-rubik.init(cube)          # 窓が開く。ここでマウスで好きな向きにしておく
+rubik.R()                 # 窓が開く。ここでマウスで好きな向きにしておく
 
 # セル2 (何度でも実行できる)
-cube = rubik.R(cube)
-rubik.update(cube)        # 窓の中身だけが変わる。向きはさわったまま
+rubik.U()                 # 窓の中身だけが変わる。向きはさわったまま
 
 # セル3
 rubik.close()             # 窓を閉じる
@@ -229,24 +232,82 @@ cube = rubik.shuffle(cube, times=3) # 今のキューブからさらに3手
 18通りの中からその都度1つを選ぶだけなので、`R` のすぐあとに `Ri` が来て
 打ち消しあうこともある。それでも `times` が20もあればじゅうぶん混ざる。
 
+### `rubik.cube` — rubik が持っている1つのキューブ
+
+引数を省いて操作したとき、変わるのはこれ。ふつうのリストなので直接読める。
+
+```python
+rubik.R()
+rubik.cube                 # いまの 6x3x3 リスト
+rubik.cube[2][0][0]        # F面 (前) の左上のステッカー
+rubik.cube = x             # 差しかえてもよい
+```
+
+**`rubik.cube` を直接書きかえたときは、窓は追随しない。**
+描き直したければ `rubik.update()` を呼ぶ。
+
+完成しているかどうかは `rubik.is_solved()` で調べる。
+
+```python
+rubik.do("RUR'U'", times=6)
+rubik.is_solved()          # True
+```
+
+> `rubik.solved()` は「調べる」ではなく「**完成状態にする**」関数なので、
+> `rubik.cube == rubik.solved()` と書くといつでも `True` になってしまう。
+> 出来ぐあいを調べたいときは `is_solved()` を使う。
+
 ## 2. 18通りの操作
 
 `X` を `U D L R F B` のどれかとして、
 
 | 関数 | 意味 |
 |---|---|
-| `X(cube)` | その面を時計回りに90度 |
-| `Xi(cube)` | その面を反時計回りに90度（`X'` のこと。i は inverse） |
-| `X2(cube)` | その面を180度 |
+| `X()` | その面を時計回りに90度 |
+| `Xi()` | その面を反時計回りに90度（`X'` のこと。i は inverse） |
+| `X2()` | その面を180度 |
 
 合わせて `U Ui U2 D Di D2 L Li L2 R Ri R2 F Fi F2 B Bi B2` の18個。
 「時計回り」はいつも**その面を外側から見て**時計回りの意味。
 
-どの関数も**操作前のキューブをもらって、操作後の新しいキューブを返す**。
-もらったキューブは書きかえないので、こう書ける。
+**引数を省くか、渡すかで役割が変わる。**
+
+```python
+rubik.R()                  # rubik.cube を回して、3Dの窓も描き直す
+after = rubik.R(before)    # before を回した新しいリストを返す。窓は触らない
+```
+
+引数を渡したときは**もらったキューブを書きかえない**ので、こう書ける。
 
 ```python
 after = rubik.R(before)    # before はそのまま残っている
+```
+
+### 手順をまとめて — `do()`
+
+`'`（プライム）は Python の関数名に使えないので関数のほうは `Ri` としたが、
+**文字列でならそのまま書ける**。本や Web の手順を書きかえずに貼りつけられる。
+
+```python
+rubik.do("RUR'U'")                 # 空白は無くてよい
+rubik.do("R U R' U'")              # あってもよい
+rubik.do("RUR'U'", times=6)        # 6回くり返すと元に戻る
+
+after = rubik.do("RU", before)     # 渡せば新しいリストを返すだけ
+```
+
+読めない手順は、**何文字目が悪いのか**まで教えてくれる。
+
+```python
+rubik.do("RUX'")
+# AssertionError: 手順の 3 文字目 'X' が読めません。
+# 使えるのは U D L R F B と、そのあとの ' か 2 です。
+```
+
+文字列を操作の名前に直すだけの `rubik.parse()` もある。
+
+```python
+rubik.parse("RUR'U'")      # ['R', 'U', 'Ri', 'Ui']
 ```
 
 渡されたキューブがおかしいときは、日本語の assert で止まる。見るのは3つ。
@@ -279,16 +340,46 @@ rubik.U(cube)
 
 | 関数 | 意味 |
 |---|---|
-| `rubik.init(cube=None)` | 窓を開く。`cube` を省くと完成状態 |
-| `rubik.update(cube)` | 映すキューブを更新する |
+| `rubik.init(cube=None)` | 窓を開く。省くといまの `rubik.cube` |
+| `rubik.update(cube=None)` | 映すキューブを更新する。省くといまの `rubik.cube` |
 | `rubik.reset_UFR()` | 見る向きを U・F・R が見える向きに戻す |
 | `rubik.reset_DBL()` | 見る向きを D・B・L が見える向きに戻す |
 | `rubik.wait()` | 窓が閉じられるまで待つ |
 | `rubik.close()` | 窓を閉じる |
 
-窓はマウスのドラッグでぐるぐる回せる。**`update()` しても見ている向きは変わらない。**
+**窓は最初に回したときにひとりでに開く。** `init()` を先に呼ばなくてよい。
+
+窓はマウスのドラッグでぐるぐる回せる。**回しても見ている向きは変わらない。**
 
 `rubik.wait()` を最後に置かないと、プログラムが終わると同時に窓も消える。
+
+窓を閉じたあとは、操作してもひとりでには開き直さない
+（画面の無い場所でプロセスが増え続けるのを防ぐため）。
+もう一度出すには `rubik.init()` を呼ぶ。
+
+### キューブを自分で作る — `rubik.Cube`
+
+`rubik.Cube()` で、独立したキューブをいくつでも作れる。
+`show3d=True` にすると、そのキューブ専用の窓が開く。
+
+```python
+c = rubik.Cube()               # 完成状態。窓は持たない
+c.R()
+c.do("RUR'U'")
+c.shuffle(seed=1)
+c.show()
+c.cube                         # この個体の 6x3x3 リスト
+c.is_solved()
+
+a = rubik.Cube(show3d=True)    # 窓つき
+b = rubik.Cube(show3d=True)    # 2つめの窓。並べて見くらべられる
+```
+
+操作の名前はモジュールの関数と同じ18通り。ほかに
+`solved()` `shuffle()` `do()` `set()` `show()` `is_solved()` と、
+窓むけの `init()` `update()` `reset_UFR()` `reset_DBL()` `wait()` `close()` がある。
+
+Jupyter でセルに `c` と書くだけで展開図が出る（`__repr__` が展開図を返す）。
 
 ### 向きのリセット
 
@@ -330,22 +421,28 @@ macOS では、窓を持つプログラムは「メインの流れ」を窓の�
 
 | ファイル | 中身 |
 |---|---|
-| `src/rubik/cube.py` | リスト表現、`solved()`、`show()`、形の検査 |
-| `src/rubik/moves.py` | 18通りの操作、`shuffle()` |
+| `src/rubik/state.py` | リスト表現、`solved()`、`show()`、`net()`、形の検査 |
+| `src/rubik/moves.py` | 18通りの操作、`shuffle()`、`parse()`、`do()` |
+| `src/rubik/interactive.py` | `Cube` クラス |
 | `src/rubik/geometry.py` | リストの添字と3次元空間の位置の対応表 |
-| `src/rubik/viewer.py` | `init` `update` `wait` `close` |
+| `src/rubik/viewer.py` | `Viewer` クラスと `init` `update` `wait` `close` |
 | `src/rubik/_window.py` | 窓そのもの（別プロセスで動く） |
-| `setup_mac.sh` | macOS の環境構築（git と uv を入れる） |
-| `setup_windows.bat` | Windows の環境構築（git と uv を入れる） |
+| `src/rubik/__init__.py` | 3通りの使いかたの入口。18通りの関数をここで組み立てる |
+| `setup_mac.sh` | macOS の環境構築（uv を入れる） |
+| `setup_windows.bat` | Windows の環境構築（uv を入れる） |
 | `examples/demo.py` | スクリプトの見本 |
 | `examples/demo.ipynb` | Jupyter Notebook の見本 |
 
 ## テスト
 
 ```
-uv run python tests/test_moves.py
-uv run python tests/test_viewer.py
+uv run python tests/test_moves.py         # 19件  リスト表現と18通りの操作
+uv run python tests/test_interactive.py   # 20件  rubik.cube、do()、Cube
+uv run python tests/test_viewer.py        # 11件  3Dグラフィクス
 ```
 
 操作の正しさは、よく知られた「手順の周期」と突き合わせて確かめている。
 たとえば `R U` をくり返すと105回で、`R U R' U'` なら6回で完成状態に戻る。
+
+どのテストも窓は開かない（`test_viewer.py` の1件だけ、Jupyter でも窓が
+落ちないことを確かめるために、ほんの数秒だけ本当に窓を出す）。

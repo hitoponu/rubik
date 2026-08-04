@@ -120,26 +120,43 @@ def solved():
     return cube
 
 
-def show(cube):
-    """展開図の形でキューブを文字表示する。
+def is_solved(cube):
+    """完成しているか。"""
+    check(cube)
+    return cube == solved()
 
-    3D ウィンドウの見た目とリストの中身が合っているか確かめたいときに使う。
+
+def net(cube):
+    """展開図の形にならべた文字列を作って返す。
+
+    画面に出したいだけなら show() を使う。
     """
     check(cube)
 
     space = "       "  # 面1つぶんの幅 (3文字 + 区切りの空白)
+    lines = []
 
     # 上段: U 面
     for row in range(3):
-        print(space + " ".join(cube[UP][row]))
+        lines.append(space + " ".join(cube[UP][row]))
 
     # 中段: L, F, R, B 面を横に並べる
     for row in range(3):
         parts = []
         for face in (LEFT, FRONT, RIGHT, BACK):
             parts.append(" ".join(cube[face][row]))
-        print("  ".join(parts))
+        lines.append("  ".join(parts))
 
     # 下段: D 面
     for row in range(3):
-        print(space + " ".join(cube[DOWN][row]))
+        lines.append(space + " ".join(cube[DOWN][row]))
+
+    return "\n".join(lines)
+
+
+def show(cube):
+    """展開図の形でキューブを文字表示する。
+
+    3D ウィンドウの見た目とリストの中身が合っているか確かめたいときに使う。
+    """
+    print(net(cube))

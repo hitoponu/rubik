@@ -27,7 +27,7 @@
 import copy
 import random
 
-from .cube import UP, LEFT, FRONT, RIGHT, BACK, DOWN, check, solved
+from .state import UP, LEFT, FRONT, RIGHT, BACK, DOWN, check, solved
 
 
 def _face_cycles(face):
@@ -193,6 +193,82 @@ ALL_MOVES = {
 
 # 名前を書いた順に並べたもの。でたらめに選ぶときに使う。
 MOVE_NAMES = list(ALL_MOVES)
+
+
+# ----------------------------------------------------------------------
+# 手順の文字列
+#
+# ルービックキューブの手順は、ふつう R U R' U' のように書く。
+# ' (プライム) は Python の関数名に使えないので関数のほうは Ri としたが、
+# 文字列でならそのまま書ける。本や Web の手順をそのまま貼れるようにしておく。
+# ----------------------------------------------------------------------
+
+# 面の文字のうしろに付けられる文字 -> 関数名につける文字
+#   ' も i も反時計回り。2 は180度。
+_SUFFIXES = {"'": "i", "i": "i", "2": "2"}
+
+
+def parse(sequence):
+    """手順の文字列を、操作の名前のリストに直す。
+
+        parse("RUR'U'")     ->  ['R', 'U', 'Ri', 'Ui']
+        parse("R U R' U'")  ->  ['R', 'U', 'Ri', 'Ui']
+        parse("RUR2Ui")     ->  ['R', 'U', 'R2', 'Ui']
+
+    空白はあってもなくてもよい。反時計回りは ' でも i でも書ける。
+    """
+    assert isinstance(sequence, str), "手順は文字列で渡してください。"
+
+    names = []
+    i = 0
+    while i < len(sequence):
+        letter = sequence[i]
+
+        if letter.isspace():
+            i += 1
+            continue
+
+        assert letter in _TURNED_FACE, (
+            f"手順の {i + 1} 文字目 {letter!r} が読めません。"
+            "使えるのは U D L R F B と、そのあとの ' か 2 です。"
+        )
+
+        # 面の文字のうしろに ' や 2 が続いていれば、それも取りこむ
+        name = letter
+        if i + 1 < len(sequence) and sequence[i + 1] in _SUFFIXES:
+            name += _SUFFIXES[sequence[i + 1]]
+            i += 1
+
+        names.append(name)
+        i += 1
+
+    return names
+
+
+def do(sequence, cube=None, times=1):
+    """手順をまとめて実行した、新しいキューブを返す。
+
+    cube を渡すとそのキューブから、渡さなければ完成状態から始める。
+    times はくり返す回数。
+
+        cube = rubik.do("RUR'U'", cube)
+        cube = rubik.do("RUR'U'", cube, times=6)   # 6回くり返すと元に戻る
+    """
+    assert isinstance(times, int) and not isinstance(times, bool) and times >= 0, \
+        "do の times は 0 以上の整数にしてください。"
+
+    names = parse(sequence)
+
+    if cube is None:
+        cube = solved()
+    else:
+        check(cube)
+
+    for _ in range(times):
+        for name in names:
+            cube = ALL_MOVES[name](cube)
+
+    return cube
 
 
 def shuffle(cube=None, times=20, seed=None):

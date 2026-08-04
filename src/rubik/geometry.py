@@ -12,7 +12,7 @@
 それぞれの小立方体の位置は x, y, z がそれぞれ -1, 0, 1 のどれかで表せる。
 """
 
-from .cube import UP, LEFT, FRONT, RIGHT, BACK, DOWN
+from .state import UP, LEFT, FRONT, RIGHT, BACK, DOWN
 
 # 面ごとの向きの情報。
 #
@@ -21,7 +21,7 @@ from .cube import UP, LEFT, FRONT, RIGHT, BACK, DOWN
 #   col_dir ... 横座標 col が 1 増えたときに進む方向
 #
 # たとえば F 面は手前 (+z) を向いていて、row が増えると下 (-y) へ、
-# col が増えると右 (+x) へ進む。cube.py で決めた「外側から見て
+# col が増えると右 (+x) へ進む。state.py で決めた「外側から見て
 # 左上が (0,0)」という約束をそのまま数字にしただけ。
 FACE_BASIS = {
     UP:    ((0, 1, 0),  (0, 0, 1),  (1, 0, 0)),
