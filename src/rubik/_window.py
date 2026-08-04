@@ -135,7 +135,7 @@ def main():
 
     # 上に 3D のキューブ、下にリスト表現の文字を並べる。
     # リスト表現は出さないのがふつうで、頼まれたときだけ出す。
-    fig = plt.figure("ルービックキューブ", figsize=(7.5, 7.5))
+    fig = plt.figure("ルービックキューブ", figsize=(6.2, 6.2))
     ax = fig.add_subplot(projection="3d")
 
     # 54枚のステッカーを、四角形の集まりとして1回だけ作る。
@@ -163,22 +163,24 @@ def main():
     look("UFR")
 
     # 見た目の調整。目盛りや枠は消して、キューブだけが浮かぶようにする。
-    ax.set_xlim(-1.62, 1.62)
-    ax.set_ylim(-1.62, 1.62)
-    ax.set_zlim(-1.62, 1.62)
+    # キューブの角は原点から 1.5 のところにあるので、そのすぐ外に枠を置く。
+    # せまくするほどキューブが大きく映るが、1.5 より内がわにすると欠ける。
+    ax.set_xlim(-1.55, 1.55)
+    ax.set_ylim(-1.55, 1.55)
+    ax.set_zlim(-1.55, 1.55)
     ax.set_box_aspect((1, 1, 1))
     ax.set_axis_off()
 
     # キューブの下に操作の案内
     caption = fig.text(0.5, 0.0, "ドラッグで回せます" if font else "drag to rotate",
-                       ha="center", va="bottom", fontsize=10, color="gray",
+                       ha="center", va="bottom", fontsize=9, color="gray",
                        **({"fontname": font} if font else {}))
 
     # そのさらに下に、リスト表現の文字。
     # 等幅の書体でないと桁がそろわないので monospace を指定する。
     listing = fig.text(0.5, 0.0, faces(first["cube"]),
                        ha="center", va="bottom",
-                       family="monospace", fontsize=13, linespacing=1.8)
+                       family="monospace", fontsize=11, linespacing=1.45)
 
     def layout(show_list):
         """リスト表現を出すかどうかで、場所の割りふりを変える。
@@ -186,14 +188,14 @@ def main():
         出さないときはキューブが窓いっぱいに広がる。
         """
         if show_list:
-            fig.subplots_adjust(left=0.0, right=1.0, bottom=0.30, top=1.0)
+            fig.subplots_adjust(left=0.0, right=1.0, bottom=0.25, top=1.0)
             listing.set_visible(True)
-            listing.set_position((0.5, 0.03))
-            caption.set_position((0.5, 0.275))
+            listing.set_position((0.5, 0.025))
+            caption.set_position((0.5, 0.215))
         else:
-            fig.subplots_adjust(left=0.0, right=1.0, bottom=0.05, top=1.0)
+            fig.subplots_adjust(left=0.0, right=1.0, bottom=0.045, top=1.0)
             listing.set_visible(False)
-            caption.set_position((0.5, 0.02))
+            caption.set_position((0.5, 0.012))
 
     layout(bool(first.get("list", False)))
 
