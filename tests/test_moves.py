@@ -217,12 +217,184 @@ def test_cubie_integrity():
 
 
 def test_move_table():
-    """18通りの操作の表が、そろっていて中身も合っている。"""
-    assert len(moves.ALL_MOVES) == 18
-    assert len(moves.MOVE_NAMES) == 18
+    """操作の表が、そろっていて中身も合っている。"""
+    assert len(moves.FACE_MOVES) == 18       # 外側の面
+    assert len(moves.SLICE_MOVES) == 9       # 中段
+    assert len(moves.ALL_MOVES) == 27
+    assert set(moves.ALL_MOVES) == set(moves.FACE_MOVES) | set(moves.SLICE_MOVES)
+    assert not (set(moves.FACE_MOVES) & set(moves.SLICE_MOVES)), "名前がかぶっている"
+
+    assert len(moves.MOVE_NAMES) == 27
+    assert len(moves.FACE_MOVE_NAMES) == 18
     assert set(moves.MOVE_NAMES) == set(moves.ALL_MOVES)
+    assert set(moves.FACE_MOVE_NAMES) == set(moves.FACE_MOVES)
+
     for name in moves.MOVE_NAMES:
         assert moves.ALL_MOVES[name] is getattr(moves, name), name
+
+
+# ----------------------------------------------------------------------
+# 中段 (スライス) の操作
+# ----------------------------------------------------------------------
+
+SLICES = ["M", "E", "S"]
+
+# 中段と、それが向きをそろえている外側の面、はさんでいる2面
+SLICE_INFO = {
+    # 名前: (同じ向きに回る面, その中段が触らない2面)
+    "M": ("L", (cube_mod.LEFT, cube_mod.RIGHT)),
+    "E": ("D", (cube_mod.UP, cube_mod.DOWN)),
+    "S": ("F", (cube_mod.FRONT, cube_mod.BACK)),
+}
+
+
+def test_slice_four_turns_is_identity():
+    """中段も4回まわすと元に戻る。"""
+    start = scrambled()
+    for name in SLICES:
+        c = start
+        for _ in range(4):
+            c = turn(name)(c)
+        assert c == start, f"{name} を4回まわしても戻らない"
+
+
+def test_slice_inverse_and_double():
+    start = scrambled()
+    for name in SLICES:
+        f, fi, f2 = turn(name), turn(name + "i"), turn(name + "2")
+        assert fi(f(start)) == start, f"{name}i が {name} の逆になっていない"
+        assert f2(start) == f(f(start)), f"{name}2 が {name} 2回と違う"
+        assert f2(f2(start)) == start
+
+
+def test_slice_leaves_the_outer_faces_alone():
+    """中段は、はさんでいる2つの面にはいっさい触らない。
+
+    たとえば M は L 面と R 面のあいだの層なので、その2面は動かない。
+    """
+    start = scrambled()
+    for name, (_, untouched) in SLICE_INFO.items():
+        after = turn(name)(start)
+        for face in untouched:
+            assert after[face] == start[face], \
+                f"{name} が {cube_mod.FACE_NAMES[face]} 面を動かしている"
+
+
+def test_slice_commutes_with_the_parallel_faces():
+    """中段は、平行な2つの面と順番を入れかえても結果が同じ。
+
+    同じ軸の別々の層なので、互いに干渉しない。
+    """
+    start = scrambled()
+    for name, (_, faces) in SLICE_INFO.items():
+        slice_turn = turn(name)
+        for face in faces:
+            face_turn = turn(cube_mod.FACE_NAMES[face])
+            assert slice_turn(face_turn(start)) == face_turn(slice_turn(start)), \
+                f"{name} と {cube_mod.FACE_NAMES[face]} が交換しない"
+
+
+def test_slice_does_not_move_corners():
+    """中段には角の小立方体が無いので、回しても角は動かない。"""
+    def corners(c):
+        found = {}
+        for f in range(6):
+            for r in range(3):
+                for cc in range(3):
+                    p = cubie_position(f, r, cc)
+                    if all(v != 0 for v in p):        # 3方向とも端 = 角
+                        found[(f, r, cc)] = c[f][r][cc]
+        return found
+
+    start = scrambled()
+    before = corners(start)
+    assert len(before) == 24, len(before)     # 角8個 x 3面 = 24枚
+    for name in SLICES:
+        assert corners(turn(name)(start)) == before, f"{name} が角を動かしている"
+
+
+def test_slice_cycle_tables():
+    """中段の巡回の表を調べる。
+
+    動くのはまん中の層の12枚だけ。4枚ずつ3つの組に、
+    すきまなく・重なりなく分かれていればよい。外側の面は回らない。
+    """
+    from rubik.moves import _SIDE_CYCLES, _TURNED_FACE
+
+    axis_of = {"M": 0, "E": 1, "S": 2}       # x, y, z のどれが 0 の層か
+
+    for name in SLICES:
+        assert name not in _TURNED_FACE, f"{name} が面を回す操作になっている"
+
+        cycles = _SIDE_CYCLES[name]
+        assert len(cycles) == 3, name
+
+        positions = []
+        for cycle in cycles:
+            assert len(cycle) == 4, (name, cycle)
+            assert len(set(cycle)) == 4, f"{name} の組の中で席がぶつかっている"
+            positions.extend(cycle)
+
+        assert len(positions) == 12, name
+        assert len(set(positions)) == 12, f"{name} の表で席がぶつかっている"
+
+        # 動く12枚はすべて、まん中の層に乗っている
+        axis = axis_of[name]
+        for face, row, col in positions:
+            assert cubie_position(face, row, col)[axis] == 0, \
+                f"{name} がまん中でない層のステッカーを動かしている: {(face, row, col)}"
+
+        # 中心のステッカー4枚も動く
+        centers = [p for p in positions if p[1] == 1 and p[2] == 1]
+        assert len(centers) == 4, f"{name} が中心を動かしていない"
+
+
+def test_slice_cubie_integrity():
+    """中段を回しても、小立方体としてのつじつまは合っている。"""
+    def cubies(c):
+        table = {}
+        for f in range(6):
+            for r in range(3):
+                for cc in range(3):
+                    table.setdefault(cubie_position(f, r, cc), []).append(c[f][r][cc])
+        return sorted(tuple(sorted(v)) for v in table.values())
+
+    expected = cubies(cube_mod.solved())
+    c = cube_mod.solved()
+    for name in ("M", "E", "S", "Mi", "E2", "Si", "M", "S", "Ei"):
+        c = turn(name)(c)
+        assert cubies(c) == expected, f"{name} のあとで小立方体がおかしい"
+
+
+def test_M_from_solved():
+    """完成状態から M を1回まわした結果を、手で書いた答えと比べる。
+
+    M は L と同じ向きなので、U のまん中の列が F へ、F が D へ、
+    D が B へ (上下逆に)、B が U へ (上下逆に) 移る。
+    """
+    after = moves.M(cube_mod.solved())
+
+    assert after[cube_mod.UP] == [["W", "B", "W"]] * 3      # まん中が B 面の青に
+    assert after[cube_mod.FRONT] == [["G", "W", "G"]] * 3   # まん中が U 面の白に
+    assert after[cube_mod.DOWN] == [["Y", "G", "Y"]] * 3    # まん中が F 面の緑に
+    assert after[cube_mod.BACK] == [["B", "Y", "B"]] * 3    # まん中が D 面の黄に
+
+    # はさんでいる2面は動かない
+    assert after[cube_mod.LEFT] == [["O"] * 3] * 3
+    assert after[cube_mod.RIGHT] == [["R"] * 3] * 3
+
+
+def test_shuffle_does_not_use_slices():
+    """shuffle は外側の面だけを使う。
+
+    中段を混ぜると中心のステッカーが動いて、面の色そのものがずれてしまう。
+    完成状態から shuffle した結果は、必ず中心が元のままになるはず。
+    """
+    for seed in range(20):
+        c = moves.shuffle(seed=seed)
+        for face in range(6):
+            assert c[face][1][1] == cube_mod.SOLVED_COLORS[face], \
+                f"seed={seed} で {cube_mod.FACE_NAMES[face]} 面の中心が動いている"
 
 
 def test_shuffle_makes_a_proper_cube():

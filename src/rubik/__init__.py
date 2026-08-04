@@ -54,11 +54,14 @@ Jupyter Notebook でセルに書いたとき、6x3x3 のリストがだらだら
     after = rubik.R(cube)         # cube はそのまま残る
 
 
-操作は18通り。X を U D L R F B のどれかとして、
+操作は27通り。X を U D L R F B M E S のどれかとして、
 
-    X    その面を時計回りに90度   (その面を外から見て時計回り)
-    Xi   その面を反時計回りに90度  (X' のこと)
-    X2   その面を180度
+    X    時計回りに90度
+    Xi   反時計回りに90度  (X' のこと)
+    X2   180度
+
+U D L R F B は外側の面を回す18通り。「時計回り」はその面を外から見た向き。
+M E S はまん中の層だけを回す9通りで、それぞれ L, D, F と同じ向きに回る。
 
 手順を文字列で渡す do() なら、X' の形もそのまま書ける。
 """
@@ -75,7 +78,11 @@ from .state import (
 )
 
 # --- 操作の部品 -------------------------------------------------------
-from .moves import ALL_MOVES, MOVE_NAMES, parse
+from .moves import (
+    ALL_MOVES, FACE_MOVES, SLICE_MOVES,
+    MOVE_NAMES, FACE_MOVE_NAMES,
+    parse,
+)
 
 # --- キューブを1つのモノとして扱う -----------------------------------
 from .interactive import Cube
@@ -266,7 +273,12 @@ __all__ = [
     "R", "Ri", "R2",
     "F", "Fi", "F2",
     "B", "Bi", "B2",
-    "ALL_MOVES", "MOVE_NAMES", "parse", "do",
+    # 中段 (スライス) の9通り
+    "M", "Mi", "M2",
+    "E", "Ei", "E2",
+    "S", "Si", "S2",
+    "ALL_MOVES", "FACE_MOVES", "SLICE_MOVES",
+    "MOVE_NAMES", "FACE_MOVE_NAMES", "parse", "do",
     # キューブを1つのモノとして
     "Cube",
     # 3Dグラフィクス

@@ -1,4 +1,4 @@
-"""ルービックキューブの18通りの操作。
+"""ルービックキューブの操作。外側の面が18通り、中段が9通りで、合わせて27通り。
 
 関数はすべて「操作前のキューブをもらって、操作後の新しいキューブを返す」形。
 もらったキューブは書き換えないので、安心して使い回せる。
@@ -9,6 +9,9 @@
 
 同じものが D, L, R, F, B にもあって、合わせて 6 x 3 = 18 通り。
 「時計回り」はいつも「その面を外側から見て時計回り」の意味。
+
+これに加えて、まん中の層だけを回す「中段」が M, E, S の 3 x 3 = 9 通り。
+合わせて 27 通りになる。
 
 
 どうやって回しているか
@@ -59,18 +62,37 @@ _SIDE_CYCLES = {
     "L": [[(UP, i, 0), (FRONT, i, 0), (DOWN, i, 0), (BACK, 2 - i, 2)] for i in range(3)],
     "F": [[(UP, 2, i), (RIGHT, i, 0), (DOWN, 0, 2 - i), (LEFT, 2 - i, 2)] for i in range(3)],
     "B": [[(UP, 0, i), (LEFT, 2 - i, 0), (DOWN, 2, 2 - i), (RIGHT, i, 2)] for i in range(3)],
+
+    # --- 中段 (スライス) の3つ -----------------------------------------
+    #
+    # まん中の層だけを回す。外側の面はどれも回らないので、動くのは
+    # まわりの4面の中央の列 (または段) の12枚だけ。真ん中のステッカーも動く。
+    #
+    # 向きは、隣り合う外側の面に合わせるのが決まりごと。
+    #   M ... L (左) と同じ向き
+    #   E ... D (下) と同じ向き
+    #   S ... F (前) と同じ向き
+    #
+    # 表の中身は、L / D / F の行の添字をまん中にずらしたものになっている。
+    "M": [[(UP, i, 1), (FRONT, i, 1), (DOWN, i, 1), (BACK, 2 - i, 1)] for i in range(3)],
+    "E": [[(FRONT, 1, i), (RIGHT, 1, i), (BACK, 1, i), (LEFT, 1, i)] for i in range(3)],
+    "S": [[(UP, 1, i), (RIGHT, i, 1), (DOWN, 1, 2 - i), (LEFT, 2 - i, 1)] for i in range(3)],
 }
 
-# 基本操作の名前 -> 回す面の番号
+# 基本操作の名前 -> 回す面の番号。
+# 中段の M / E / S はどの面も回さないので、ここには載せない。
 _TURNED_FACE = {"U": UP, "D": DOWN, "L": LEFT, "R": RIGHT, "F": FRONT, "B": BACK}
 
 
 def _turn(cube, name):
-    """name ('U' など) の面を時計回りに90度回した、新しいキューブを返す。"""
+    """name ('U' や 'M' など) を時計回りに90度回した、新しいキューブを返す。"""
     check(cube)
 
     new = copy.deepcopy(cube)
-    cycles = _face_cycles(_TURNED_FACE[name]) + _SIDE_CYCLES[name]
+    cycles = list(_SIDE_CYCLES[name])
+    if name in _TURNED_FACE:
+        # 外側の面を回す操作は、その面そのものもまわる
+        cycles += _face_cycles(_TURNED_FACE[name])
 
     for cycle in cycles:
         for i in range(4):
@@ -179,10 +201,72 @@ def B2(cube):
 
 
 # ----------------------------------------------------------------------
-# 18通りの操作を名前で引ける表。shuffle() が使う。
+# 中段 (スライス) の操作
+#
+# 外側の面ではなく、まん中の層だけを回す。
+#
+#   M  L 面と R 面のあいだの層。L と同じ向きに回る (Middle)
+#   E  U 面と D 面のあいだの層。D と同じ向きに回る (Equator)
+#   S  F 面と B 面のあいだの層。F と同じ向きに回る (Standing)
+#
+# 中段には角の小立方体が無いので、この3つを回しても角は動かない。
+# 中心のステッカーが動くので、回すと「面の色」がずれることがある。
 # ----------------------------------------------------------------------
 
-ALL_MOVES = {
+def M(cube):
+    """まん中の縦の層 (M) を回す。L (左の面) と同じ向き。"""
+    return _turn(cube, "M")
+
+
+def Mi(cube):
+    """まん中の縦の層 (M) を逆向きに回す。"""
+    return M(M(M(cube)))
+
+
+def M2(cube):
+    """まん中の縦の層 (M) を180度。"""
+    return M(M(cube))
+
+
+def E(cube):
+    """まん中の横の層 (E) を回す。D (下の面) と同じ向き。"""
+    return _turn(cube, "E")
+
+
+def Ei(cube):
+    """まん中の横の層 (E) を逆向きに回す。"""
+    return E(E(E(cube)))
+
+
+def E2(cube):
+    """まん中の横の層 (E) を180度。"""
+    return E(E(cube))
+
+
+def S(cube):
+    """まん中の奥ゆきの層 (S) を回す。F (手前の面) と同じ向き。"""
+    return _turn(cube, "S")
+
+
+def Si(cube):
+    """まん中の奥ゆきの層 (S) を逆向きに回す。"""
+    return S(S(S(cube)))
+
+
+def S2(cube):
+    """まん中の奥ゆきの層 (S) を180度。"""
+    return S(S(cube))
+
+
+# ----------------------------------------------------------------------
+# 操作を名前で引ける表。
+#
+# FACE_MOVES  外側の面を回す18通り。shuffle() はここからだけ選ぶ
+# SLICE_MOVES 中段を回す9通り
+# ALL_MOVES   合わせて27通り
+# ----------------------------------------------------------------------
+
+FACE_MOVES = {
     "U": U, "Ui": Ui, "U2": U2,
     "D": D, "Di": Di, "D2": D2,
     "L": L, "Li": Li, "L2": L2,
@@ -191,8 +275,17 @@ ALL_MOVES = {
     "B": B, "Bi": Bi, "B2": B2,
 }
 
-# 名前を書いた順に並べたもの。でたらめに選ぶときに使う。
+SLICE_MOVES = {
+    "M": M, "Mi": Mi, "M2": M2,
+    "E": E, "Ei": Ei, "E2": E2,
+    "S": S, "Si": Si, "S2": S2,
+}
+
+ALL_MOVES = {**FACE_MOVES, **SLICE_MOVES}
+
+# 名前を書いた順に並べたもの。
 MOVE_NAMES = list(ALL_MOVES)
+FACE_MOVE_NAMES = list(FACE_MOVES)
 
 
 # ----------------------------------------------------------------------
@@ -214,6 +307,7 @@ def parse(sequence):
         parse("RUR'U'")     ->  ['R', 'U', 'Ri', 'Ui']
         parse("R U R' U'")  ->  ['R', 'U', 'Ri', 'Ui']
         parse("RUR2Ui")     ->  ['R', 'U', 'R2', 'Ui']
+        parse("MES")        ->  ['M', 'E', 'S']       中段も書ける
 
     空白はあってもなくてもよい。反時計回りは ' でも i でも書ける。
     """
@@ -228,9 +322,10 @@ def parse(sequence):
             i += 1
             continue
 
-        assert letter in _TURNED_FACE, (
+        assert letter in _SIDE_CYCLES, (
             f"手順の {i + 1} 文字目 {letter!r} が読めません。"
-            "使えるのは U D L R F B と、そのあとの ' か 2 です。"
+            "使えるのは U D L R F B (外側の面) と M E S (中段)、"
+            "そのあとの ' か 2 です。"
         )
 
         # 面の文字のうしろに ' や 2 が続いていれば、それも取りこむ
@@ -289,6 +384,9 @@ def shuffle(cube=None, times=20, seed=None):
     rubik.shuffle() のほうは、キューブを省くと rubik.cube を差しかえて
     何も返さない。
 
+    選ぶのは外側の面を回す18通りだけで、中段 (M E S) は混ぜない。
+    中段を回すと中心のステッカーが動いて、面の色そのものがずれてしまうため。
+
     18通りの中からその都度1つを選ぶだけなので、R のすぐあとに Ri が来て
     打ち消しあうこともある。それでも times が20もあればじゅうぶん混ざる。
     """
@@ -304,7 +402,7 @@ def shuffle(cube=None, times=20, seed=None):
     dice = random.Random(seed)
 
     for _ in range(times):
-        name = dice.choice(MOVE_NAMES)
+        name = dice.choice(FACE_MOVE_NAMES)   # 中段は混ぜない
         cube = ALL_MOVES[name](cube)
 
     return cube

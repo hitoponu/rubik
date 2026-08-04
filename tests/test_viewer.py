@@ -154,9 +154,19 @@ def test_child_survives_the_notebook_backend():
     os.environ["MPLBACKEND"] = "module://matplotlib_inline.backend_inline"
     try:
         rubik.init()
-        time.sleep(2.0)
-        assert viewer._alive(), \
-            "Jupyter の設定を引きついでしまい、窓が出ないまま終わっている"
+        child = viewer._default._process
+
+        # しばらく生きていれば窓は出ている。
+        # 設定を引きついでしまった場合は、1秒とたたずに終わってしまう。
+        for _ in range(6):
+            time.sleep(0.5)
+            if child.poll() is not None:
+                break
+
+        assert child.poll() is None, (
+            "Jupyter の設定を引きついでしまい、窓が出ないまま終わっている "
+            f"(子プロセスの終了コード {child.poll()})"
+        )
     finally:
         rubik.close()
         if before is None:

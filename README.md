@@ -41,7 +41,7 @@ Finder で **`start_jupyter.command` をダブルクリック**する。
 
 教育用のルービックキューブ Python ライブラリ。
 
-機能は3つだけ。**リストでの表現**、**18通りの操作**、**マウスで回せる3D表示**。
+機能は3つだけ。**リストでの表現**、**27通りの操作**、**マウスで回せる3D表示**。
 速さより読みやすさを優先していて、わざと遠回りな書き方をしているところがある。
 
 ```python
@@ -86,7 +86,7 @@ uv run jupyter notebook                 # ノートブックで対話的に動�
 | 画面なしのサーバ、SSH 先 | ✗ | 同上 |
 
 窓が開けない場所では、日本語のメッセージが出る。
-リスト表現と18通りの操作、`show()` による展開図表示は**どこでも動く**ので、
+リスト表現と27通りの操作、`show()` による展開図表示は**どこでも動く**ので、
 Colab でも3D以外はそのまま使える。
 
 ### Jupyter Notebook を動かす手順
@@ -245,7 +245,7 @@ after = rubik.shuffle(before, times=3)   # 渡せば新しいリストを返す
 
 `seed` を決めておくと配置を再現できるので、授業で全員に同じ問題を配るときに使える。
 
-18通りの中からその都度1つを選ぶだけなので、`R` のすぐあとに `Ri` が来て
+外側の18通りの中からその都度1つを選ぶだけなので、`R` のすぐあとに `Ri` が来て
 打ち消しあうこともある。それでも `times` が20もあればじゅうぶん混ざる。
 
 ### `rubik.cube` — rubik が持っている1つのキューブ
@@ -292,18 +292,45 @@ rubik.parse("RUR'U'")      # ['R', 'U', 'Ri', 'Ui']
 
 見わけかたは単純で、**キューブを渡せば値が返り、省けば `rubik.cube` が変わる**。
 
-## 2. 18通りの操作
+## 2. 27通りの操作
 
-`X` を `U D L R F B` のどれかとして、
+`X` を `U D L R F B M E S` のどれかとして、
 
 | 関数 | 意味 |
 |---|---|
-| `X()` | その面を時計回りに90度 |
-| `Xi()` | その面を反時計回りに90度（`X'` のこと。i は inverse） |
-| `X2()` | その面を180度 |
+| `X()` | 時計回りに90度 |
+| `Xi()` | 反時計回りに90度（`X'` のこと。i は inverse） |
+| `X2()` | 180度 |
 
-合わせて `U Ui U2 D Di D2 L Li L2 R Ri R2 F Fi F2 B Bi B2` の18個。
+### 外側の面を回す18通り
+
+`U Ui U2 D Di D2 L Li L2 R Ri R2 F Fi F2 B Bi B2`
+
 「時計回り」はいつも**その面を外側から見て**時計回りの意味。
+
+### 中段を回す9通り
+
+`M Mi M2 E Ei E2 S Si S2`
+
+外側の面ではなく、**まん中の層だけ**を回す。向きは、はさんでいる面の
+片方に合わせるのが決まりごと。
+
+| 名前 | 回る層 | 向き | 由来 |
+|---|---|---|---|
+| `M` | L と R のあいだ（縦） | `L` と同じ | Middle |
+| `E` | U と D のあいだ（横） | `D` と同じ | Equator |
+| `S` | F と B のあいだ（奥ゆき） | `F` と同じ | Standing |
+
+```python
+rubik.M()                  # まん中の縦の層を回す
+rubik.do("M2E'S")          # 手順の中でも使える
+```
+
+中段には角の小立方体が無いので、**回しても角は動かない**。
+かわりに中心のステッカーが動くので、面の色そのものがずれることがある。
+
+そのため **`shuffle()` は外側の18通りからしか選ばない**。
+中段まで混ぜると、完成状態がどれなのか分かりにくくなるため。
 
 **引数を省くか、渡すかで役割が変わる。**
 
@@ -336,7 +363,7 @@ after = rubik.do("RU", before)     # 渡せば新しいリストを返すだけ
 ```python
 rubik.do("RUX'")
 # AssertionError: 手順の 3 文字目 'X' が読めません。
-# 使えるのは U D L R F B と、そのあとの ' か 2 です。
+# 使えるのは U D L R F B (外側の面) と M E S (中段)、そのあとの ' か 2 です。
 ```
 
 文字列を操作の名前に直すだけの `rubik.parse()` もある。
@@ -410,7 +437,7 @@ a = rubik.Cube(show3d=True)    # 窓つき
 b = rubik.Cube(show3d=True)    # 2つめの窓。並べて見くらべられる
 ```
 
-操作の名前はモジュールの関数と同じ18通り。ほかに
+操作の名前はモジュールの関数と同じ27通り。ほかに
 `solved()` `shuffle()` `do()` `set()` `show()` `is_solved()` と、
 窓むけの `init()` `update()` `reset_UFR()` `reset_DBL()` `wait()` `close()` がある。
 
@@ -457,12 +484,12 @@ macOS では、窓を持つプログラムは「メインの流れ」を窓の�
 | ファイル | 中身 |
 |---|---|
 | `src/rubik/state.py` | リスト表現、`solved()`、`show()`、`net()`、形の検査 |
-| `src/rubik/moves.py` | 18通りの操作、`shuffle()`、`parse()`、`do()` |
+| `src/rubik/moves.py` | 27通りの操作、`shuffle()`、`parse()`、`do()` |
 | `src/rubik/interactive.py` | `Cube` クラス |
 | `src/rubik/geometry.py` | リストの添字と3次元空間の位置の対応表 |
 | `src/rubik/viewer.py` | `Viewer` クラスと `init` `update` `wait` `close` |
 | `src/rubik/_window.py` | 窓そのもの（別プロセスで動く） |
-| `src/rubik/__init__.py` | 3通りの使いかたの入口。18通りの関数をここで組み立てる |
+| `src/rubik/__init__.py` | 3通りの使いかたの入口。27通りの関数をここで組み立てる |
 | `setup_mac.command` | macOS の環境構築（uv を入れる）。ダブルクリックで動く |
 | `start_jupyter.command` | macOS で Jupyter Notebook を開く。ダブルクリックで動く |
 | `setup_windows.bat` | Windows の環境構築（uv を入れる）。ダブルクリックで動く |
@@ -472,8 +499,8 @@ macOS では、窓を持つプログラムは「メインの流れ」を窓の�
 ## テスト
 
 ```
-uv run python tests/test_moves.py         # 19件  リスト表現と18通りの操作
-uv run python tests/test_interactive.py   # 20件  rubik.cube、do()、Cube
+uv run python tests/test_moves.py         # 28件  リスト表現と27通りの操作
+uv run python tests/test_interactive.py   # 23件  rubik.cube、do()、Cube
 uv run python tests/test_viewer.py        # 11件  3Dグラフィクス
 ```
 
