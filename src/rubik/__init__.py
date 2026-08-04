@@ -110,37 +110,27 @@ def _current():
     return cube
 
 
-# 下の2つはどちらも値を返さない。
-#
-# Jupyter Notebook はセルの最後に書いた式の値をそのまま画面に出すので、
-# rubik.R() が値を返すと 6x3x3 のリストがだらだら表示されてしまう。
-# 状態を変える呼び出しは、そろって何も返さないことにした。
-# いまの状態がほしいときは rubik.cube を見る。
+def _apply(new_cube):
+    """rubik.cube を差しかえて、3D の窓も描き直す。
 
-def _turned(new_cube):
-    """回したあとの後始末。状態を進めて、窓を開いて描き直す。"""
-    global cube
-    cube = new_cube
-    _viewer.update(cube)      # 窓がまだ一度も開いていなければ、ここで開く
+    窓がまだ一度も開いていなければ、ここで開く。
+    引数を省いた呼び出し (R() や solved()、shuffle() など) は、
+    みなこれを通る。
 
-
-def _prepared(new_cube):
-    """キューブを用意しただけのときの後始末。
-
-    状態は差しかえるが、窓はひとりでには開かない。
-    すでに開いていれば描き直す。
+    値は返さない。Jupyter Notebook はセルの最後に書いた式の値をそのまま
+    画面に出すので、ここで値を返すと 6x3x3 のリストがだらだら表示されて
+    しまうため。いまの状態がほしいときは rubik.cube を見る。
     """
     global cube
     cube = new_cube
-    if _viewer._alive():
-        _viewer.update(cube)
+    _viewer.update(cube)
 
 
 # ----------------------------------------------------------------------
-# 18通りの操作。
+# 27通りの操作。
 #
 # 「引数を省いたら rubik.cube を回す、渡されたらそれを回して返す」という
-# 同じ形なので、moves.py の表からまとめて作っている。18個を手で書くと、
+# 同じ形なので、moves.py の表からまとめて作っている。27個を手で書くと、
 # moves.py を直したときに必ずどこかがずれるため。
 # 標準ライブラリの turtle も同じ理由で、モジュールの関数を Turtle クラスの
 # メソッドから機械的に作っている。
@@ -153,7 +143,7 @@ def _make_move(name):
     def move(cube=None):
         if cube is not None:
             return turn(cube)            # 渡されたキューブを回して、返す
-        _turned(turn(_current()))        # rubik.cube を回して窓も更新。何も返さない
+        _apply(turn(_current()))     # rubik.cube を回して窓も更新。何も返さない
 
     move.__name__ = name
     move.__doc__ = (
@@ -189,7 +179,7 @@ def do(sequence, cube=None, times=1):
     """
     if cube is not None:
         return _moves.do(sequence, cube, times=times)
-    _turned(_moves.do(sequence, _current(), times=times))
+    _apply(_moves.do(sequence, _current(), times=times))
 
 
 def solved():
@@ -198,10 +188,9 @@ def solved():
         rubik.solved()
         rubik.cube            # 完成状態のリスト
 
-    値は返さない。窓が開いていれば描き直すが、
-    窓がまだ無いときに、これだけで開くことはしない。
+    値は返さない。3D の窓も描き直す (まだ開いていなければ、ここで開く)。
     """
-    _prepared(_state.solved())
+    _apply(_state.solved())
 
 
 def shuffle(cube=None, times=20, seed=None):
@@ -215,11 +204,12 @@ def shuffle(cube=None, times=20, seed=None):
 
         after = rubik.shuffle(before, times=5)   # 渡せば新しいリストを返す
 
-    引数を省いたときは値を返さない。
+    引数を省いたときは値を返さず、3D の窓を描き直す
+    (まだ開いていなければ、ここで開く)。
     """
     if cube is not None:
         return _moves.shuffle(cube, times=times, seed=seed)
-    _prepared(_moves.shuffle(times=times, seed=seed))
+    _apply(_moves.shuffle(times=times, seed=seed))
 
 
 def show(cube=None):
@@ -266,7 +256,7 @@ __all__ = [
     "UP", "LEFT", "FRONT", "RIGHT", "BACK", "DOWN",
     "FACE_NAMES", "COLORS", "SOLVED_COLORS",
     "check", "net", "show", "solved", "shuffle", "is_solved",
-    # 18通りの操作
+    # 外側の面を回す18通り
     "U", "Ui", "U2",
     "D", "Di", "D2",
     "L", "Li", "L2",
