@@ -129,13 +129,10 @@ def is_solved(cube):
 def faces(cube):
     """面を 0 から順に、横1列に並べた文字列を作る。
 
-          0 U              1 L              2 F         ...
-    [['W','W','W'],  [['O','O','O'],  [['G','G','G'],
-     ['W','W','W'],   ['O','O','O'],   ['G','G','G'],
-     ['W','W','W']]   ['O','O','O']]   ['G','G','G']]
-
-    Python のリストとそのままの書きかたにしてあるので、
-    ひとかたまりが cube[面] に、その1行が cube[面][縦] にあたる。
+        0 U      1 L      2 F      3 R      4 B      5 D
+       W W W    O O O    G G G    R R R    B B B    Y Y Y
+       W W W    O O O    G G G    R R R    B B B    Y Y Y
+       W W W    O O O    G G G    R R R    B B B    Y Y Y
 
     展開図 (net) とちがって、面ごとに向きを入れかえない。
     3x3 はそのまま 3x3 なので、cube[面][縦][横] の添字が
@@ -143,23 +140,14 @@ def faces(cube):
     """
     check(cube)
 
-    gap = "  "          # 面と面のあいだ
-
-    # 面ごとに、リストの書きかたで3行を作る
-    blocks = []
-    for face in range(6):
-        rows = ["[" + ",".join(f"'{sticker}'" for sticker in cube[face][row]) + "]"
-                for row in range(3)]
-        blocks.append(["[" + rows[0] + ",",
-                       " " + rows[1] + ",",
-                       " " + rows[2] + "]"])
-
-    width = max(len(line) for block in blocks for line in block)
+    gap = "    "          # 面と面のあいだ
+    width = 5             # 「W W W」で5文字
 
     lines = [gap.join(f"{face} {FACE_NAMES[face]}".center(width)
                       for face in range(6))]
+
     for row in range(3):
-        lines.append(gap.join(block[row].ljust(width) for block in blocks))
+        lines.append(gap.join(" ".join(cube[face][row]) for face in range(6)))
 
     return "\n".join(lines)
 

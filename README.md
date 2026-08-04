@@ -455,23 +455,18 @@ rubik.list_view()          # いまの設定 (True / False)
 いつ切りかえてもよく、窓を開く前に決めておくこともできる。
 
 出るのは展開図ではなく、**面を 0 から順に横1列**に並べたもの。
-**Python のリストと同じ書きかた**なので、ひとかたまりがそのまま
-`cube()[面]`、その1行が `cube()[面][縦]` にあたる。
-
-```
-      0 U              1 L              2 F              3 R              4 B              5 D
-[['W','B','O'],  [['B','O','O'],  [['G','W','Y'],  [['R','R','W'],  [['B','Y','R'],  [['Y','G','R'],
- ['W','B','G'],   ['O','O','O'],   ['G','W','W'],   ['B','R','R'],   ['B','Y','B'],   ['Y','G','Y'],
- ['W','R','G']]   ['O','O','O']]   ['G','W','G']]   ['W','R','R']]   ['B','Y','B']]   ['Y','G','Y']]
-```
-
 面ごとに向きを入れかえないので、`cube()[面][縦][横]` の添字が
 そのまま文字の位置になる。
 
+```
+ 0 U      1 L      2 F      3 R      4 B      5 D
+W B O    B O O    G W Y    R R W    B Y R    Y G R
+W B G    O O O    G W W    B R R    B Y B    Y G Y
+W R G    O O O    G W G    W R R    B Y B    Y G Y
+```
+
 同じものは `rubik.faces(cube)` で文字列としても取れる。
 展開図がほしいときは `rubik.net(cube)` か `rubik.show(cube)`。
-
-リスト表現は100文字ぶんの幅があるので、出すと窓が横に広がる。
 
 **窓は最初の操作でひとりでに開く。** `init()` を先に呼ばなくてよい。
 `R()` などの操作だけでなく、`solved()` や `shuffle()` でも開く。
@@ -569,7 +564,7 @@ macOS では、窓を持つプログラムは「メインの流れ」を窓の�
 uv run python tests/test_moves.py         # 28件  リスト表現と27通りの操作
 uv run python tests/test_interactive.py   # 28件  cube()、do()、Cube
 uv run python tests/test_star_import.py   # 10件  from rubik import * で使う
-uv run python tests/test_viewer.py        # 17件  3Dグラフィクスと faces()
+uv run python tests/test_viewer.py        # 16件  3Dグラフィクスと faces()
 ```
 
 操作の正しさは、よく知られた「手順の周期」と突き合わせて確かめている。
