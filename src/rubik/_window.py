@@ -135,7 +135,7 @@ def main():
 
     # 上に 3D のキューブ、下にリスト表現の文字を並べる。
     # リスト表現は出さないのがふつうで、頼まれたときだけ出す。
-    fig = plt.figure("ルービックキューブ", figsize=(6.2, 6.2))
+    fig = plt.figure("ルービックキューブ", figsize=(5.8, 5.2))
     ax = fig.add_subplot(projection="3d")
 
     # 54枚のステッカーを、四角形の集まりとして1回だけ作る。
@@ -163,11 +163,12 @@ def main():
     look("UFR")
 
     # 見た目の調整。目盛りや枠は消して、キューブだけが浮かぶようにする。
-    # キューブの角は原点から 1.5 のところにあるので、そのすぐ外に枠を置く。
-    # せまくするほどキューブが大きく映るが、1.5 より内がわにすると欠ける。
-    ax.set_xlim(-1.55, 1.55)
-    ax.set_ylim(-1.55, 1.55)
-    ax.set_zlim(-1.55, 1.55)
+    # 枠を広くとるほど、そのぶんキューブは小さく映る。
+    # キューブの角は原点から 1.5 のところにあるので、1.5 より内がわに
+    # すると角が欠けてしまう。
+    ax.set_xlim(-1.75, 1.75)
+    ax.set_ylim(-1.75, 1.75)
+    ax.set_zlim(-1.75, 1.75)
     ax.set_box_aspect((1, 1, 1))
     ax.set_axis_off()
 
@@ -188,14 +189,14 @@ def main():
         出さないときはキューブが窓いっぱいに広がる。
         """
         if show_list:
-            fig.subplots_adjust(left=0.0, right=1.0, bottom=0.25, top=1.0)
+            fig.subplots_adjust(left=0.0, right=1.0, bottom=0.26, top=1.0)
             listing.set_visible(True)
             listing.set_position((0.5, 0.025))
-            caption.set_position((0.5, 0.215))
+            caption.set_position((0.5, 0.225))
         else:
-            fig.subplots_adjust(left=0.0, right=1.0, bottom=0.045, top=1.0)
+            fig.subplots_adjust(left=0.0, right=1.0, bottom=0.05, top=1.0)
             listing.set_visible(False)
-            caption.set_position((0.5, 0.012))
+            caption.set_position((0.5, 0.014))
 
     layout(bool(first.get("list", False)))
 
