@@ -24,7 +24,7 @@
     rubik.show()                  # 展開図を文字で見る
     rubik.list_view(True)         # 窓の下にリスト表現も出す (ふつうは出ない)
     rubik.cube()                  # いまの 6x3x3 リスト
-    rubik.cube(x)                 # 差しかえる
+    rubik.set_cube(x)             # 差しかえる
 
 rubik.cube() が返すのは中身そのものなので、書きかえればそのまま状態が
 変わる。ただし窓は追随しないので、描き直したければ rubik.update() を呼ぶ。
@@ -138,7 +138,7 @@ def _apply(new_cube):
     _viewer.update(_cube)
 
 
-def cube(new_cube=None):
+def cube():
     """いまのキューブ (6x3x3 のリスト) を返す。
 
         rubik.cube()             # いまの状態
@@ -147,13 +147,19 @@ def cube(new_cube=None):
     返ってくるのは写しではなく中身そのものなので、書きかえればそのまま
     状態が変わる。ただし窓は追随しないので、描き直したければ update() を呼ぶ。
 
-    キューブを渡すと、そちらに差しかえて 3D の窓も描き直す。
-    このときは値を返さない。
-
-        rubik.cube(x)
+    差しかえたいときは set_cube() を使う。
     """
-    if new_cube is None:
-        return _cube
+    return _cube
+
+
+def set_cube(new_cube):
+    """いまのキューブを、渡されたものに差しかえる。
+
+        rubik.set_cube(x)
+
+    3D の窓も描き直す。値は返さない。
+    取り出すほうは cube()。
+    """
     _apply(new_cube)
 
 
@@ -283,8 +289,8 @@ def update(cube=None):
 
 
 __all__ = [
-    # いま rubik が持っているキューブを取り出す
-    "cube",
+    # いま rubik が持っているキューブ
+    "cube", "set_cube",
     # リスト表現
     "UP", "LEFT", "FRONT", "RIGHT", "BACK", "DOWN",
     "FACE_NAMES", "COLORS", "SOLVED_COLORS",

@@ -270,7 +270,7 @@ after = rubik.shuffle(before, times=3)   # 渡せば新しいリストを返す
 rubik.R()
 rubik.cube()               # いまの 6x3x3 リスト
 rubik.cube()[1][0][0]      # F面 (前) の左上のステッカー
-rubik.cube(x)              # 差しかえる（値は返さない）
+rubik.set_cube(x)          # 差しかえる（値は返さない）
 ```
 
 返ってくるのは写しではなく**中身そのもの**なので、書きかえればそのまま
@@ -505,7 +505,7 @@ c.do("RUR'U'")
 c.shuffle(seed=1)
 c.show()
 c.cube()                       # この個体の 6x3x3 リスト
-c.cube(x)                      # 差しかえる
+c.set_cube(x)                  # 差しかえる
 c.is_solved()
 
 a = rubik.Cube(show3d=True)    # 窓つき
@@ -513,7 +513,7 @@ b = rubik.Cube(show3d=True)    # 2つめの窓。並べて見くらべられる
 ```
 
 操作の名前はモジュールの関数と同じ27通り。ほかに
-`cube()` `solved()` `shuffle()` `do()` `show()` `is_solved()` と、
+`cube()` `set_cube()` `solved()` `shuffle()` `do()` `show()` `is_solved()` と、
 窓むけの `init()` `update()` `list_view()` `reset_UFR()` `reset_DBL()`
 `wait()` `close()` がある。
 

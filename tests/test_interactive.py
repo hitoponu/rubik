@@ -108,7 +108,7 @@ def test_module_functions_exist():
 
 def test_no_argument_moves_the_module_cube():
     """引数を省くと、いまのキューブが進む。"""
-    rubik.cube(state.solved())
+    rubik.set_cube(state.solved())
     rubik.R()
     assert rubik.cube() == moves.R(state.solved())
 
@@ -122,7 +122,7 @@ def test_no_argument_moves_the_module_cube():
 
 def test_argument_form_stays_pure():
     """キューブを渡したときは、いまのキューブを触らない。"""
-    rubik.cube(moves.shuffle(times=7, seed=3))
+    rubik.set_cube(moves.shuffle(times=7, seed=3))
     snapshot = copy.deepcopy(rubik.cube())
 
     other = state.solved()
@@ -138,7 +138,7 @@ def test_argument_form_stays_pure():
 
 def test_module_do():
     """rubik.do() はいまのキューブを進める。"""
-    rubik.cube(state.solved())
+    rubik.set_cube(state.solved())
     rubik.do("RUR'U'", times=6)
     assert rubik.cube() == state.solved(), "6回くり返しても戻らない"
 
@@ -148,7 +148,7 @@ def test_module_do():
 
 def test_solved_and_shuffle_set_the_module_cube():
     """solved() と shuffle() はいまのキューブを差しかえる。"""
-    rubik.cube(moves.shuffle(times=5, seed=1))
+    rubik.set_cube(moves.shuffle(times=5, seed=1))
     assert rubik.solved() is None
     assert rubik.cube() == state.solved()
 
@@ -160,11 +160,11 @@ def test_solved_and_shuffle_set_the_module_cube():
     assert rubik.cube() == got
 
 
-def test_cube_gets_and_sets():
-    """cube() は取り出しと差しかえの両方をする。
+def test_cube_and_set_cube():
+    """cube() で取り出し、set_cube() で差しかえる。
 
-    引数なしなら、いまのキューブを返す。
-    キューブを渡すと、そちらに差しかえて何も返さない。
+    名前を分けてあるので、読むだけのつもりが書きかえてしまう、
+    ということが起きない。
     """
     # 取り出す
     rubik.solved()
@@ -172,8 +172,16 @@ def test_cube_gets_and_sets():
 
     # 差しかえる。値は返さない
     target = moves.shuffle(times=6, seed=8)
-    assert rubik.cube(target) is None
+    assert rubik.set_cube(target) is None
     assert rubik.cube() == target
+
+    # cube() は取り出し専用なので、渡そうとすると止まる
+    try:
+        rubik.cube(target)
+    except TypeError:
+        pass
+    else:
+        raise AssertionError("cube() が引数を受けとってしまう")
 
     # 差しかえたあとも、ふつうに回せる
     rubik.R()
@@ -247,7 +255,7 @@ def test_state_changing_calls_return_nothing():
     import contextlib
     import io
 
-    rubik.cube(state.solved())
+    rubik.set_cube(state.solved())
     c = rubik.Cube()
 
     with contextlib.redirect_stdout(io.StringIO()):   # show() の表示は捨てる
@@ -272,7 +280,7 @@ def test_state_changing_calls_return_nothing():
         assert c.do("RUR'U'") is None
         assert c.solved() is None
         assert c.shuffle(seed=1) is None
-        assert c.cube(state.solved()) is None
+        assert c.set_cube(state.solved()) is None
         assert c.show() is None
         assert c.update() is None
         assert c.reset_UFR() is None
@@ -311,10 +319,10 @@ def test_is_solved():
     solved() のほうはいまのキューブを完成状態にしてしまうので、
     「戻ったか」を調べるのに使うと、いつでも True になってしまう。
     """
-    rubik.cube(state.solved())
+    rubik.set_cube(state.solved())
     assert rubik.is_solved()
 
-    rubik.cube(moves.shuffle(times=5, seed=4))
+    rubik.set_cube(moves.shuffle(times=5, seed=4))
     snapshot = copy.deepcopy(rubik.cube())
     assert not rubik.is_solved()
     assert rubik.cube() == snapshot, "is_solved() が状態を変えている"
@@ -324,7 +332,7 @@ def test_is_solved():
     assert rubik.cube() == snapshot
 
     # do() で戻したあとを、正しく判定できる
-    rubik.cube(state.solved())
+    rubik.set_cube(state.solved())
     rubik.do("RUR'U'", times=6)
     assert rubik.is_solved()
     rubik.do("RUR'U'")
@@ -336,7 +344,7 @@ def test_show_uses_the_module_cube():
     import contextlib
     import io
 
-    rubik.cube(moves.shuffle(times=4, seed=2))
+    rubik.set_cube(moves.shuffle(times=4, seed=2))
 
     printed = io.StringIO()
     with contextlib.redirect_stdout(printed):
@@ -419,7 +427,7 @@ def test_cube_solved_and_shuffle():
 def test_cube_set():
     c = rubik.Cube()
     target = moves.shuffle(times=6, seed=5)
-    assert c.cube(target) is None
+    assert c.set_cube(target) is None
     assert c.cube() == target
     target[1][1][1] = "R"
     assert c.cube()[1][1][1] != "R", "渡したリストをそのまま抱えている"

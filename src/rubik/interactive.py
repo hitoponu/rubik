@@ -30,7 +30,7 @@ from .viewer import Viewer
 class Cube:
     """1つのルービックキューブ。
 
-    状態を変えるメソッド (回す、solved、shuffle、do、cube(x)) は値を返さない。
+    状態を変えるメソッド (回す、solved、shuffle、do、set_cube) は値を返さない。
     Jupyter Notebook のセルで c.R() と書いたときに、6x3x3 のリストが
     だらだら表示されるのを避けるため。いまの状態は c.cube() で見る。
     """
@@ -60,7 +60,7 @@ class Cube:
 
     # --- 状態をあつかう ------------------------------------------------
 
-    def cube(self, new_cube=None):
+    def cube(self):
         """このキューブの中身 (6x3x3 のリスト) を返す。
 
             c.cube()             # いまの状態
@@ -69,12 +69,18 @@ class Cube:
         返ってくるのは写しではなく中身そのものなので、書きかえれば
         そのまま状態が変わる。窓は追随しないので update() を呼ぶ。
 
-        リストを渡すと、そちらに差しかえる。このときは値を返さない。
-
-            c.cube(x)
+        差しかえたいときは set_cube() を使う。
         """
-        if new_cube is None:
-            return self._cube
+        return self._cube
+
+    def set_cube(self, new_cube):
+        """中身を、渡されたものに差しかえる。
+
+            c.set_cube(x)
+
+        窓があれば描き直す。値は返さない。写しを取るので、渡した
+        リストをあとから書きかえても影響しない。
+        """
         _state.check(new_cube)
         self._cube = copy.deepcopy(new_cube)
         self._draw()

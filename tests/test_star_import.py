@@ -83,11 +83,11 @@ def test_cube_shows_the_real_state():
     assert cube()[FRONT][0] == ["G", "G", "Y"], cube()[FRONT][0]   # noqa: F405
 
 
-def test_cube_can_also_set():
-    """cube(x) と書けば差しかえられる。"""
+def test_set_cube_is_the_setter():
+    """set_cube(x) で差しかえる。cube() は取り出し専用。"""
     target = rubik.moves.shuffle(times=6, seed=8)
 
-    assert cube(target) is None                # noqa: F405
+    assert set_cube(target) is None                # noqa: F405
     assert cube() == target                    # noqa: F405
     assert rubik.cube() == target
 
